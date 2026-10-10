@@ -33,6 +33,18 @@
             <version>9.4.0</version>
         </dependency>
 
+        <!-- JSP tag support for safe escaped output in database-backed views. -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <!-- Automated tests for repository and catalog behavior. Maven downloads this automatically. -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

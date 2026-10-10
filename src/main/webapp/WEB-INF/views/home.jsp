@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/application.css">
 </head>
 <body>
 <header class="site-header">
@@ -13,7 +14,10 @@
         <span class="brand-mark">M</span>
         <span>MarketSquare</span>
     </a>
-    <span class="header-note">Java E-commerce Project</span>
+    <nav class="header-links" aria-label="Account">
+        <a href="${pageContext.request.contextPath}/login">Sign in</a>
+        <a class="button button-primary" href="${pageContext.request.contextPath}/register">Create account</a>
+    </nav>
 </header>
 
 <main>
@@ -25,8 +29,9 @@
             and administrators oversee the marketplace.
         </p>
         <div class="hero-actions">
-            <a class="button button-primary" href="#workspaces">Explore the platform <span aria-hidden="true">→</span></a>
-            <span class="build-status"><span class="status-dot"></span> Project foundation initialized</span>
+            <a class="button button-primary" href="${pageContext.request.contextPath}/register">Get started <span aria-hidden="true">→</span></a>
+            <a class="button button-secondary" href="${pageContext.request.contextPath}/login">Sign in</a>
+            <span class="build-status"><span class="status-dot"></span> Database-connected account system</span>
         </div>
     </section>
 
@@ -45,21 +50,21 @@
                 <p class="card-label">01 / CUSTOMER</p>
                 <h3>Buyer workspace</h3>
                 <p>Browse and search products, manage a wishlist, place orders, and track deliveries.</p>
-                <span class="feature-tag">Planned feature set</span>
+                <span class="feature-tag">Buyer registration available</span>
             </article>
             <article class="workspace-card seller-card">
                 <div class="card-icon" aria-hidden="true">▦</div>
                 <p class="card-label">02 / MERCHANT</p>
                 <h3>Seller workspace</h3>
                 <p>Create listings, update inventory, process orders, and review sales performance.</p>
-                <span class="feature-tag">Planned feature set</span>
+                <span class="feature-tag">Seller registration available</span>
             </article>
             <article class="workspace-card admin-card">
                 <div class="card-icon" aria-hidden="true">⌘</div>
                 <p class="card-label">03 / CONTROL</p>
                 <h3>Admin workspace</h3>
                 <p>Manage user accounts, oversee products and orders, and review system activity.</p>
-                <span class="feature-tag">Planned feature set</span>
+                <span class="feature-tag">Privileged account</span>
             </article>
         </div>
     </section>

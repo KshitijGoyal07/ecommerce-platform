@@ -22,7 +22,7 @@ public final class UserDao {
 
     /**
      * Creates an account using an already-computed password hash, never a plaintext password.
-     * Password hashing and login verification are added in the authentication checkpoint.
+     * Hashing and password verification belong to AuthenticationService.
      */
     public UserAccount create(String fullName, String email, String passwordHash, Role role) throws SQLException {
         String normalizedName = requireText(fullName, "Full name");
@@ -70,6 +70,26 @@ public final class UserDao {
             statement.setString(1, normalizedEmail);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? Optional.of(mapAccount(resultSet)) : Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * Loads the password hash only for authentication. Callers must keep the hash out of sessions and views.
+     */
+    public Optional<UserLoginRecord> findCredentialsByEmail(String email) throws SQLException {
+        String normalizedEmail = normalizeEmail(email);
+        String sql = "SELECT user_id, full_name, email, password_hash, role, is_active, created_at "
+                + "FROM users WHERE email = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, normalizedEmail);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+                UserAccount account = mapAccount(resultSet);
+                return Optional.of(new UserLoginRecord(account, resultSet.getString("password_hash")));
             }
         }
     }
