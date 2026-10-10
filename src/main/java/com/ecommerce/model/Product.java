@@ -16,8 +16,8 @@ public class Product {
 
     public Product(long id, long sellerId, String name, String description,
                    String category, BigDecimal price, int stockQuantity) {
-        if (id <= 0 || sellerId <= 0) {
-            throw new IllegalArgumentException("Product ID and seller ID must be positive.");
+        if (id < 0 || sellerId <= 0) {
+            throw new IllegalArgumentException("Product ID cannot be negative and seller ID must be positive.");
         }
         if (stockQuantity < 0) {
             throw new IllegalArgumentException("Stock quantity cannot be negative.");
@@ -29,8 +29,15 @@ public class Product {
         this.active = true;
     }
 
+    /** Returns the database ID, or 0 while this product is a new, unsaved draft. */
     public long getId() {
         return id;
+    }
+
+    /** Creates a new product draft. Persist it with ProductDao.create() to receive a database ID. */
+    public static Product draft(long sellerId, String name, String description,
+                                String category, BigDecimal price, int stockQuantity) {
+        return new Product(0, sellerId, name, description, category, price, stockQuantity);
     }
 
     public long getSellerId() {
@@ -63,7 +70,7 @@ public class Product {
 
     public synchronized void updateDetails(String name, String description, String category, BigDecimal price) {
         this.name = requireText(name, "Product name");
-        this.description = requireText(description, "Product description");
+        this.description = description == null ? "" : description.trim();
         this.category = requireText(category, "Product category");
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Product price must be greater than zero.");
