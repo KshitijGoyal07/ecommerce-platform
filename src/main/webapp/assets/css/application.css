@@ -47,3 +47,35 @@
 .feature-mini .eyebrow { margin-bottom: 5px; }
 .feature-mini p { margin-bottom: 0; }
 @media (max-width: 760px) { .product-grid { grid-template-columns: 1fr; } .metric-grid, .feature-row { grid-template-columns: 1fr; } .header-user { gap: 8px; } .header-user > span { display: none; } .auth-layout { padding-top: 30px; } }
+
+/* Seller catalogue and inventory management */
+.message-success { background: rgba(58, 190, 135, .1); border: 1px solid rgba(58, 190, 135, .35); color: #a9f0cf; padding: 12px 14px; border-radius: 9px; margin: 18px 0; font-size: .9rem; }
+.app-form textarea { width: 100%; padding: 12px 13px; color: var(--text); background: #0e1425; border: 1px solid rgba(180,198,235,.24); border-radius: 9px; font: inherit; resize: vertical; }
+.seller-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.seller-form-grid > div { min-width: 0; }
+.seller-products-table { min-width: 820px; }
+.seller-product-description { color: var(--muted); font-size: .8rem; margin-top: 5px; max-width: 280px; overflow-wrap: anywhere; }
+.price-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.status-pill { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: .75rem; white-space: nowrap; }
+.status-active { background: rgba(58,190,135,.12); color: #a9f0cf; }
+.status-inactive { background: rgba(180,198,235,.1); color: var(--muted); }
+.seller-actions-cell { min-width: 230px; }
+.listing-edit { margin-bottom: 10px; }
+.listing-edit summary { color: var(--blue); cursor: pointer; font-size: .85rem; font-weight: 650; padding: 5px 0; }
+.compact-form { padding: 10px 0; gap: 8px; }
+.compact-form label { display: grid; gap: 5px; }
+.compact-form input, .compact-form textarea { margin-top: 3px; font-size: .85rem; }
+.stock-form { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+.stock-form label { display: block; color: var(--muted); font-size: .78rem; margin-bottom: 5px; }
+.stock-input-row { display: flex; align-items: center; gap: 6px; }
+.stock-input-row input { min-width: 0; width: 90px; padding: 8px; background: #0e1425; color: var(--text); border: 1px solid rgba(180,198,235,.24); border-radius: 8px; font: inherit; }
+.stock-input-row .button, .deactivate-form .button { padding: 7px 9px; font-size: .78rem; }
+.deactivate-form { margin-top: 8px; }
+.button-danger { background: transparent; color: #ffb8c0; border: 1px solid rgba(245,94,112,.4); cursor: pointer; font: inherit; padding: 8px 12px; border-radius: 8px; }
+.button-danger:hover { background: rgba(245,94,112,.1); }
+@media (max-width: 760px) { .seller-form-grid { grid-template-columns: 1fr; } }
+
+/* Seller form sample-data helper */
+.seller-form-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 11px; margin: 2px 0 5px; }
+.seller-form-tools .button { cursor: pointer; font: inherit; }
+.seller-form-hint { color: var(--muted); font-size: .8rem; }

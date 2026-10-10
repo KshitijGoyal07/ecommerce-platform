@@ -29,6 +29,15 @@ public final class DatabaseConnection {
             throw new IllegalStateException("MARKETSQUARE_DB_URL must not be blank.");
         }
 
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(
+                "MySQL JDBC driver is not available to this application.",
+                e
+            );
+        }
+
         return DriverManager.getConnection(url, user, password);
     }
 

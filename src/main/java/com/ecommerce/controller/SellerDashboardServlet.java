@@ -2,6 +2,7 @@ package com.ecommerce.controller;
 
 import com.ecommerce.model.UserAccount;
 import com.ecommerce.repository.jdbc.ProductDao;
+import com.ecommerce.security.CsrfTokens;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -30,6 +31,14 @@ public final class SellerDashboardServlet extends HttpServlet {
             request.setAttribute("productCount", products.size());
             request.setAttribute("displayName", account.fullName());
             request.setAttribute("pageTitle", "Seller workspace | MarketSquare");
+            request.setAttribute("csrfToken", CsrfTokens.getOrCreate(request.getSession(true)));
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                request.setAttribute("sellerSuccess", session.getAttribute("sellerSuccess"));
+                request.setAttribute("sellerError", session.getAttribute("sellerError"));
+                session.removeAttribute("sellerSuccess");
+                session.removeAttribute("sellerError");
+            }
             request.getRequestDispatcher("/WEB-INF/views/dashboard/seller.jsp").forward(request, response);
         } catch (SQLException exception) {
             getServletContext().log("Unable to load seller inventory.", exception);

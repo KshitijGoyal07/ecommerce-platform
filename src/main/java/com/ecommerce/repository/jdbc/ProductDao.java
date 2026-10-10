@@ -149,6 +149,93 @@ public class ProductDao {
         }
     }
 
+    /**
+     * Updates listing details only when the supplied seller owns the listing.
+     * Stock is intentionally managed by setStockQuantityForSeller instead.
+     */
+    public boolean updateDetailsForSeller(Product product, long sellerId) throws SQLException {
+        if (product == null || product.getId() <= 0) {
+            throw new IllegalArgumentException("A saved product is required for updates.");
+        }
+        requirePositiveId(sellerId, "Seller ID");
+        if (product.getSellerId() != sellerId) {
+            return false;
+        }
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                if (!existsBySellerId(connection, product.getId(), sellerId)) {
+                    connection.rollback();
+                    return false;
+                }
+                long categoryId = findOrCreateCategory(connection, product.getCategory());
+                String sql = """
+                        UPDATE products
+                        SET category_id = ?, name = ?, description = ?, price = ?
+                        WHERE product_id = ? AND seller_id = ?
+                        """;
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setLong(1, categoryId);
+                    statement.setString(2, product.getName());
+                    setNullableDescription(statement, 3, product.getDescription());
+                    statement.setBigDecimal(4, product.getPrice());
+                    statement.setLong(5, product.getId());
+                    statement.setLong(6, sellerId);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        }
+    }
+
+    /** Sets an exact stock count, scoped to the owning seller account. */
+    public boolean setStockQuantityForSeller(long sellerId, long productId, int quantity) throws SQLException {
+        requirePositiveId(sellerId, "Seller ID");
+        requirePositiveId(productId, "Product ID");
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Stock quantity cannot be negative.");
+        }
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE products SET stock_quantity = ? WHERE product_id = ? AND seller_id = ?")) {
+            statement.setInt(1, quantity);
+            statement.setLong(2, productId);
+            statement.setLong(3, sellerId);
+            int affected = statement.executeUpdate();
+            return affected > 0 || existsBySellerId(connection, productId, sellerId);
+        }
+    }
+
+    /** Deactivates a listing only if it belongs to the specified seller. */
+    public boolean deactivateForSeller(long sellerId, long productId) throws SQLException {
+        requirePositiveId(sellerId, "Seller ID");
+        requirePositiveId(productId, "Product ID");
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE products SET is_active = FALSE WHERE product_id = ? AND seller_id = ?")) {
+            statement.setLong(1, productId);
+            statement.setLong(2, sellerId);
+            int affected = statement.executeUpdate();
+            return affected > 0 || existsBySellerId(connection, productId, sellerId);
+        }
+    }
+
+    private boolean existsBySellerId(Connection connection, long productId, long sellerId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM products WHERE product_id = ? AND seller_id = ?")) {
+            statement.setLong(1, productId);
+            statement.setLong(2, sellerId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
     /** Hides a product without deleting historical order references. */
     public boolean deactivate(long productId) throws SQLException {
         requirePositiveId(productId, "Product ID");
