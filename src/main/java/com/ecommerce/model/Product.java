@@ -37,31 +37,31 @@ public class Product {
         return sellerId;
     }
 
-    public String getName() {
+    public synchronized String getName() {
         return name;
     }
 
-    public String getDescription() {
+    public synchronized String getDescription() {
         return description;
     }
 
-    public String getCategory() {
+    public synchronized String getCategory() {
         return category;
     }
 
-    public BigDecimal getPrice() {
+    public synchronized BigDecimal getPrice() {
         return price;
     }
 
-    public int getStockQuantity() {
+    public synchronized int getStockQuantity() {
         return stockQuantity;
     }
 
-    public boolean isActive() {
+    public synchronized boolean isActive() {
         return active;
     }
 
-    public void updateDetails(String name, String description, String category, BigDecimal price) {
+    public synchronized void updateDetails(String name, String description, String category, BigDecimal price) {
         this.name = requireText(name, "Product name");
         this.description = requireText(description, "Product description");
         this.category = requireText(category, "Product category");
@@ -72,7 +72,7 @@ public class Product {
     }
 
     /** Reduces available stock or throws a domain-specific exception. */
-    public void reserveStock(int quantity) {
+    public synchronized void reserveStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero.");
         }
@@ -85,14 +85,14 @@ public class Product {
         stockQuantity -= quantity;
     }
 
-    public void restock(int quantity) {
+    public synchronized void restock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Restock quantity must be greater than zero.");
         }
         stockQuantity = Math.addExact(stockQuantity, quantity);
     }
 
-    public void deactivate() {
+    public synchronized void deactivate() {
         active = false;
     }
 

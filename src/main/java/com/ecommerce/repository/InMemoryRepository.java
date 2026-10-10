@@ -30,7 +30,7 @@ public class InMemoryRepository<T, ID> implements Repository<T, ID> {
     }
 
     @Override
-    public T save(T entity) {
+    public synchronized T save(T entity) {
         Objects.requireNonNull(entity, "Entity must not be null.");
         ID id = Objects.requireNonNull(idExtractor.apply(entity), "Entity ID must not be null.");
         entities.put(id, entity);
@@ -38,25 +38,25 @@ public class InMemoryRepository<T, ID> implements Repository<T, ID> {
     }
 
     @Override
-    public Optional<T> findById(ID id) {
+    public synchronized Optional<T> findById(ID id) {
         Objects.requireNonNull(id, "ID must not be null.");
         return Optional.ofNullable(entities.get(id));
     }
 
     @Override
-    public List<T> findAll() {
+    public synchronized List<T> findAll() {
         // List.copyOf prevents callers from changing the repository through this result.
         return List.copyOf(entities.values());
     }
 
     @Override
-    public boolean deleteById(ID id) {
+    public synchronized boolean deleteById(ID id) {
         Objects.requireNonNull(id, "ID must not be null.");
         return entities.remove(id) != null;
     }
 
     @Override
-    public long count() {
+    public synchronized long count() {
         return entities.size();
     }
 }
