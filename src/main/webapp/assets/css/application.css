@@ -423,7 +423,6 @@ table.seller-products-table img.seller-product-thumb {
     object-fit: contain;
     padding: 4px;
     margin: 0;
-    vertical-align: middle;
 }
 
 table.seller-products-table .seller-product-copy {
