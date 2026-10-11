@@ -1,6 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.model.UserAccount;
+import com.ecommerce.repository.jdbc.SellerOrderReportDao;
 import com.ecommerce.repository.jdbc.ProductDao;
 import com.ecommerce.security.CsrfTokens;
 import jakarta.servlet.ServletException;
@@ -16,6 +17,8 @@ import java.sql.SQLException;
 @WebServlet("/seller/dashboard")
 public final class SellerDashboardServlet extends HttpServlet {
     private final ProductDao productDao = new ProductDao();
+    private final SellerOrderReportDao sellerOrderReportDao =
+        new SellerOrderReportDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,6 +32,33 @@ public final class SellerDashboardServlet extends HttpServlet {
             var products = productDao.findBySellerId(account.id());
             request.setAttribute("products", products);
             request.setAttribute("productCount", products.size());
+            try {
+                request.setAttribute(
+                        "sellerOrders",
+                        sellerOrderReportDao.findOrdersForSeller(account.id())
+                );
+
+                request.setAttribute(
+                        "salesSummary",
+                        sellerOrderReportDao.getSalesSummary(account.id())
+                );
+
+            } catch (SQLException reportException) {
+                getServletContext().log(
+                        "Unable to load seller order reports.",
+                        reportException
+                );
+
+                request.setAttribute(
+                        "sellerReportError",
+                        "Seller order reports are temporarily unavailable."
+                );
+
+                request.setAttribute(
+                        "sellerOrders",
+                        java.util.Collections.emptyList()
+                );
+            }
             request.setAttribute("displayName", account.fullName());
             request.setAttribute("pageTitle", "Seller workspace | MarketSquare");
             request.setAttribute("csrfToken", CsrfTokens.getOrCreate(request.getSession(true)));

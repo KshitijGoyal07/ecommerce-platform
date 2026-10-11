@@ -86,6 +86,156 @@
             </c:otherwise>
         </c:choose>
     </section>
+    <c:if test="${not empty sellerReportError}">
+        <section class="panel">
+            <div class="message message-error" role="alert">
+                <c:out value="${sellerReportError}" />
+            </div>
+        </section>
+    </c:if>
+
+    <c:if test="${empty sellerReportError}">
+        <!-- SELLER SALES SUMMARY -->
+        <section class="panel seller-sales-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">BUSINESS OVERVIEW</p>
+                    <h2>Sales summary</h2>
+                </div>
+                <span class="count-chip">INR (₹)</span>
+            </div>
+
+            <div class="seller-sales-grid">
+                <article class="seller-sales-card">
+                    <p class="eyebrow">ORDERS</p>
+                    <p class="seller-sales-value">
+                        <c:out value="${salesSummary.orderCount}" />
+                    </p>
+                    <p class="muted-copy">Non-cancelled orders</p>
+                </article>
+
+                <article class="seller-sales-card">
+                    <p class="eyebrow">UNITS SOLD</p>
+                    <p class="seller-sales-value">
+                        <c:out value="${salesSummary.unitsSold}" />
+                    </p>
+                    <p class="muted-copy">Across your product listings</p>
+                </article>
+
+                <article class="seller-sales-card">
+                    <p class="eyebrow">SALES TOTAL</p>
+                    <p class="seller-sales-value">
+                        <fmt:formatNumber
+                            value="${salesSummary.salesTotal}"
+                            type="currency"
+                            currencyCode="INR"
+                            minFractionDigits="2"
+                            maxFractionDigits="2" />
+                    </p>
+                    <p class="muted-copy">Excludes cancelled orders</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- SELLER ORDER HISTORY -->
+        <section class="panel seller-orders-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">CUSTOMER PURCHASES</p>
+                    <h2>Recent orders</h2>
+                </div>
+            </div>
+
+            <c:choose>
+                <c:when test="${empty sellerOrders}">
+                    <p class="empty-state">
+                        No orders containing your products have been placed yet.
+                    </p>
+                </c:when>
+
+                <c:otherwise>
+                    <div class="table-wrap">
+                        <table class="data-table seller-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Your products</th>
+                                    <th>Seller subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <c:forEach var="order" items="${sellerOrders}">
+                                    <tr>
+                                        <td>
+                                            <strong>
+                                                #<c:out value="${order.orderId}" />
+                                            </strong>
+                                        </td>
+
+                                        <td>
+                                            <c:out value="${order.createdAtDisplay}" />
+                                        </td>
+
+                                        <td>
+                                            <span class="status-pill">
+                                                <c:out value="${order.status}" />
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="seller-order-items">
+                                                <c:forEach
+                                                    var="item"
+                                                    items="${order.items}">
+                                                    <div class="seller-order-item">
+                                                        <strong>
+                                                            <c:out value="${item.productName}" />
+                                                        </strong>
+
+                                                        <span class="seller-order-item-meta">
+                                                            Qty:
+                                                            <c:out value="${item.quantity}" />
+                                                            &middot;
+                                                            <fmt:formatNumber
+                                                                value="${item.unitPrice}"
+                                                                type="currency"
+                                                                currencyCode="INR"
+                                                                minFractionDigits="2"
+                                                                maxFractionDigits="2" />
+                                                            each
+                                                        </span>
+                                                    </div>
+                                                </c:forEach>
+                                            </div>
+                                        </td>
+
+                                        <td class="price-cell">
+                                            <strong>
+                                                <fmt:formatNumber
+                                                    value="${order.subtotal}"
+                                                    type="currency"
+                                                    currencyCode="INR"
+                                                    minFractionDigits="2"
+                                                    maxFractionDigits="2" />
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+
+            <p class="muted-copy">
+                Order totals include only products sold by your store.
+                Buyer delivery addresses and other sellers' items are not displayed.
+            </p>
+        </section>
+    </c:if>
     <p class="small-note">A listing can be edited or deactivated only by the seller who owns it. Deactivation hides it from buyers without deleting historical order references. All prices are Indian Rupees (INR).</p>
 </main><footer class="site-footer"><span>MarketSquare · Seller</span><span>Product and inventory management</span></footer>
 <script>
