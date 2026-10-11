@@ -17,6 +17,7 @@
     <nav class="header-user" aria-label="Buyer navigation">
         <span>Buyer workspace</span>
         <a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/cart">Cart (<c:out value="${cartQuantity}" />)</a>
+        <a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/wishlist">Wishlist</a>
         <a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/orders">My orders</a>
         <form method="post" action="${pageContext.request.contextPath}/logout"><button class="button button-secondary" type="submit">Sign out</button></form>
     </nav>
@@ -25,9 +26,9 @@
     <section class="dashboard-intro">
         <p class="eyebrow">BUYER WORKSPACE</p>
         <h1 class="dashboard-title">Welcome, <span><c:out value="${displayName}" /></span></h1>
-        <p class="muted-copy">Explore the active products listed on MarketSquare. Choose your quantity before adding an item to your cart.</p>
+        <p class="muted-copy">Explore active MarketSquare products, save favourites, and revisit products you have viewed.</p>
     </section>
-    <section class="panel">
+    <section class="panel" id="products">
         <div class="panel-heading">
             <div><p class="eyebrow">MARKETPLACE</p><h2>Available products</h2></div>
             <span class="count-chip"><c:out value="${productCount}" /> shown</span>
@@ -41,12 +42,27 @@
                     <c:forEach var="product" items="${products}">
                         <article class="product-card">
                             <div class="product-category"><c:out value="${product.category}" /></div>
-                            <h3><c:out value="${product.name}" /></h3>
+                            <h3><a href="${pageContext.request.contextPath}/buyer/product?id=${product.id}"><c:out value="${product.name}" /></a></h3>
                             <p class="product-description"><c:out value="${product.description}" /></p>
                             <div class="product-meta">
                                 <strong><fmt:formatNumber value="${product.price}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></strong>
                                 <span><c:out value="${product.stockQuantity}" /> in stock</span>
                             </div>
+                            <p><a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/product?id=${product.id}">View details</a></p>
+                            <c:choose>
+                                <c:when test="${wishlistProductIds.contains(product.id)}">
+                                    <p><a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/wishlist">Saved to wishlist ✓</a></p>
+                                </c:when>
+                                <c:otherwise>
+                                    <form method="post" action="${pageContext.request.contextPath}/buyer/wishlist" class="wishlist-inline-form">
+                                        <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="productId" value="<c:out value='${product.id}' />">
+                                        <input type="hidden" name="returnTo" value="dashboard">
+                                        <button class="button button-secondary" type="submit">♡ Save to wishlist</button>
+                                    </form>
+                                </c:otherwise>
+                            </c:choose>
                             <c:choose>
                                 <c:when test="${product.stockQuantity > 0}">
                                     <form method="post" action="${pageContext.request.contextPath}/buyer/cart" class="add-to-cart-form">
@@ -70,12 +86,28 @@
             </c:otherwise>
         </c:choose>
     </section>
+    <c:if test="${not empty recentlyViewedProducts}">
+        <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">YOUR ACTIVITY</p><h2>Recently viewed</h2></div><span class="count-chip"><c:out value="${recentlyViewedProducts.size()}" /> products</span></div>
+            <div class="product-grid">
+                <c:forEach var="recentProduct" items="${recentlyViewedProducts}">
+                    <article class="product-card">
+                        <div class="product-category"><c:out value="${recentProduct.category}" /></div>
+                        <h3><a href="${pageContext.request.contextPath}/buyer/product?id=${recentProduct.id}"><c:out value="${recentProduct.name}" /></a></h3>
+                        <p class="product-description"><c:out value="${recentProduct.description}" /></p>
+                        <div class="product-meta"><strong><fmt:formatNumber value="${recentProduct.price}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></strong><span><c:out value="${recentProduct.stockQuantity}" /> in stock</span></div>
+                        <p><a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/product?id=${recentProduct.id}">View again</a></p>
+                    </article>
+                </c:forEach>
+            </div>
+        </section>
+    </c:if>
     <section class="feature-row">
         <article class="feature-mini"><p class="eyebrow">SHOPPING</p><h3>Your cart</h3><p>Review quantities and continue to checkout with INR totals.</p><p><a href="${pageContext.request.contextPath}/buyer/cart">Open shopping cart →</a></p></article>
         <article class="feature-mini"><p class="eyebrow">PURCHASES</p><h3>Order history</h3><p>Review previous orders, item prices, and order status.</p><p><a href="${pageContext.request.contextPath}/buyer/orders">View my orders →</a></p></article>
     </section>
 </main>
-<footer class="site-footer"><span>MarketSquare · Buyer</span><span>Database-backed product catalogue · INR pricing</span></footer>
+<footer class="site-footer"><span>MarketSquare · Buyer</span><span>Wishlist and recently viewed · INR pricing</span></footer>
 <script>
 (() => {
   document.addEventListener('click', (event) => {
