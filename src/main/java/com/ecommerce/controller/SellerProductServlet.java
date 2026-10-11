@@ -46,8 +46,10 @@ public final class SellerProductServlet extends HttpServlet {
             return;
         }
 
+        String targetView = "create";
         try {
             String action = requiredParameter(request, "action");
+            targetView = "create".equals(action) ? "create" : "listings";
             switch (action) {
                 case "create" -> createProduct(request, account);
                 case "update" -> updateProduct(request, account);
@@ -69,7 +71,8 @@ public final class SellerProductServlet extends HttpServlet {
             setFlash(session, null,
                     "We could not save this listing. Check product/category database permissions and the Tomcat log.");
         }
-        response.sendRedirect(request.getContextPath() + "/seller/dashboard");
+        response.sendRedirect(request.getContextPath()
+                + "/seller/dashboard?view=" + targetView);
     }
 
     private void createProduct(HttpServletRequest request, UserAccount account)
