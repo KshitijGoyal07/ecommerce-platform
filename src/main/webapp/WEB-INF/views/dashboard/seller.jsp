@@ -65,6 +65,20 @@
                                 <label for="stock-${product.id}">Set stock quantity</label><div class="stock-input-row"><input id="stock-${product.id}" name="stockQuantity" type="number" min="0" max="2147483647" step="1" required value="<c:out value='${product.stockQuantity}' />"><button class="button button-secondary" type="submit">Update</button></div>
                             </form>
                             <c:if test="${product.active}"><form method="post" action="${pageContext.request.contextPath}/seller/products" class="deactivate-form" onsubmit="return confirm('Hide this product from buyers? Existing order records will be preserved.');"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="action" value="deactivate"><input type="hidden" name="productId" value="<c:out value='${product.id}' />"><button class="button button-danger" type="submit">Deactivate</button></form></c:if>
+                            <c:if test="${not product.active}">
+                                <form method="post"
+                                    action="${pageContext.request.contextPath}/seller/products"
+                                    class="reactivate-form">
+                                    <input type="hidden" name="csrfToken"
+                                        value="<c:out value='${csrfToken}' />"/>
+                                    <input type="hidden" name="action" value="activate"/>
+                                    <input type="hidden" name="productId"
+                                        value="<c:out value='${product.id}' />"/>
+                                    <button class="button button-secondary" type="submit">
+                                        Reactivate
+                                    </button>
+                                </form>
+                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>

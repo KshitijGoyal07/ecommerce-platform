@@ -236,6 +236,28 @@ public class ProductDao {
         }
     }
 
+    /**
+     * Reactivates a listing only if it belongs to the specified seller.
+     */
+    public boolean activateForSeller(long sellerId, long productId)
+            throws SQLException {
+        requirePositiveId(sellerId, "Seller ID");
+        requirePositiveId(productId, "Product ID");
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(
+                    "UPDATE products SET is_active = TRUE "
+                            + "WHERE product_id = ? AND seller_id = ?")) {
+
+            statement.setLong(1, productId);
+            statement.setLong(2, sellerId);
+
+            int affected = statement.executeUpdate();
+            return affected > 0
+                    || existsBySellerId(connection, productId, sellerId);
+        }
+    }
+
     /** Hides a product without deleting historical order references. */
     public boolean deactivate(long productId) throws SQLException {
         requirePositiveId(productId, "Product ID");

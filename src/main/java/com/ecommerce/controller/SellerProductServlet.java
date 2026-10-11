@@ -46,6 +46,7 @@ public final class SellerProductServlet extends HttpServlet {
                 case "create" -> createProduct(request, account);
                 case "update" -> updateProduct(request, account);
                 case "stock" -> updateStock(request, account);
+                case "activate" -> activateProduct(request, account);
                 case "deactivate" -> deactivateProduct(request, account);
                 default -> throw new IllegalArgumentException("Choose a valid product action.");
             }
@@ -94,6 +95,21 @@ public final class SellerProductServlet extends HttpServlet {
             throw new IllegalArgumentException("Product not found in your seller account.");
         }
         setFlash(request.getSession(false), "Product listing was deactivated and hidden from buyers.", null);
+    }
+
+    private void activateProduct(HttpServletRequest request, UserAccount account)
+        throws SQLException {
+        long productId = parseProductId(request.getParameter("productId"));
+
+        if (!productDao.activateForSeller(account.id(), productId)) {
+            throw new IllegalArgumentException(
+                    "Product not found in your seller account.");
+        }
+
+        setFlash(
+                request.getSession(false),
+                "Product listing was reactivated and is now visible to buyers.",
+                null);
     }
 
     private static ProductListingInput formInput(HttpServletRequest request) {
