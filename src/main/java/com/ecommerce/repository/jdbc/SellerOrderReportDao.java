@@ -43,6 +43,8 @@ public final class SellerOrderReportDao {
                 SELECT
                     o.order_id,
                     o.status,
+                    o.payment_method,
+                    o.payment_status,
                     o.created_at,
                     u.full_name AS buyer_name,
                     o.shipping_address_snapshot,
@@ -77,6 +79,8 @@ public final class SellerOrderReportDao {
 
                     String status = displayStatus(
                             results.getString("status"));
+                    String paymentMethod = results.getString("payment_method");
+                    String paymentStatus = results.getString("payment_status");
                     String buyerName = results.getString("buyer_name");
                     String shippingAddressSnapshot =
                             results.getString("shipping_address_snapshot");
@@ -84,7 +88,7 @@ public final class SellerOrderReportDao {
                     SellerOrderView order = orders.computeIfAbsent(
                             orderId,
                             id -> new SellerOrderView(
-                                    id, status, createdAt, buyerName, shippingAddressSnapshot));
+                                    id, status, createdAt, buyerName, shippingAddressSnapshot, paymentMethod, paymentStatus));
 
                     BigDecimal unitPrice =
                             results.getBigDecimal("unit_price");
@@ -166,18 +170,30 @@ public final class SellerOrderReportDao {
         private final Instant createdAt;
         private final String buyerName;
         private final String shippingAddressSnapshot;
+        private final String paymentMethod;
+        private final String paymentStatus;
         private final List<SellerOrderItemView> items = new ArrayList<>();
         private BigDecimal subtotal = BigDecimal.ZERO;
 
         private SellerOrderView(
-                long orderId, String status, Instant createdAt,
-                String buyerName, String shippingAddressSnapshot) {
+                long orderId,
+                String status,
+                Instant createdAt,
+                String buyerName,
+                String shippingAddressSnapshot,
+                String paymentMethod,
+                String paymentStatus) {
             this.orderId = orderId;
             this.status = status;
             this.createdAt = createdAt;
             this.buyerName = buyerName == null ? "Unknown buyer" : buyerName;
             this.shippingAddressSnapshot = shippingAddressSnapshot == null
                     ? "" : shippingAddressSnapshot;
+            this.paymentMethod = paymentMethod == null
+                    ? "COD" : paymentMethod;
+
+            this.paymentStatus = paymentStatus == null
+                    ? "PENDING" : paymentStatus;
         }
 
         private void addItem(SellerOrderItemView item) {
@@ -191,6 +207,14 @@ public final class SellerOrderReportDao {
 
         public String getStatus() {
             return status;
+        }
+
+        public String getPaymentMethod() {
+            return paymentMethod;
+        }
+
+        public String getPaymentStatus() {
+            return paymentStatus;
         }
 
         public String getCreatedAtDisplay() {

@@ -38,6 +38,66 @@
                                 <div class="order-heading-copy"><p class="eyebrow">ORDER #<c:out value="${order.id}" /></p><h3><c:out value="${order.status}" /></h3><p class="muted-copy order-date">Placed <c:out value="${order.createdAtDisplay}" /></p></div>
                                 <div class="order-total-block"><span>Order total</span><strong class="order-total"><fmt:formatNumber value="${order.totalAmount}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></strong></div>
                             </div>
+                            
+                            <div class="order-payment-summary">
+                                <div class="order-payment-method">
+                                    <span class="order-payment-label">PAYMENT METHOD</span>
+
+                                    <strong>
+                                        <c:choose>
+                                            <c:when test="${order.paymentMethod eq 'COD'}">
+                                                Cash on delivery
+                                            </c:when>
+                                            <c:when test="${order.paymentMethod eq 'UPI'}">
+                                                UPI · Demo
+                                            </c:when>
+                                            <c:when test="${order.paymentMethod eq 'CARD'}">
+                                                Card · Demo
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:out value="${order.paymentMethod}" />
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </strong>
+                                </div>
+
+                                <div class="order-payment-state">
+                                    <span class="order-payment-label">PAYMENT STATUS</span>
+
+                                    <c:choose>
+                                        <c:when test="${order.paymentStatus eq 'SIMULATED'}">
+                                            <span class="payment-status-pill payment-status-demo">
+                                                Demo recorded
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus eq 'PAID'}">
+                                            <span class="payment-status-pill payment-status-paid">
+                                                Paid
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus eq 'FAILED'}">
+                                            <span class="payment-status-pill payment-status-failed">
+                                                Failed
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus eq 'REFUNDED'}">
+                                            <span class="payment-status-pill">
+                                                Refunded
+                                            </span>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <span class="payment-status-pill payment-status-pending">
+                                                Pending
+                                            </span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+
                             <div class="order-lines">
                                 <c:forEach var="item" items="${order.items}">
                                     <div class="checkout-item order-line-item">

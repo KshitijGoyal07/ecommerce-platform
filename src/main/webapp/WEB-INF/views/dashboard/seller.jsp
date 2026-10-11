@@ -6,8 +6,8 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><c:out value="${pageTitle}" /></title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/application.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=seller-fix-2">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/application.css?v=seller-fix-2">
 </head><body class="app-body">
 <header class="site-header"><a class="brand" href="${pageContext.request.contextPath}/home"><span class="brand-mark">M</span><span>MarketSquare</span></a><div class="header-user"><span>Seller workspace</span><form method="post" action="${pageContext.request.contextPath}/logout"><button class="button button-secondary" type="submit">Sign out</button></form></div></header>
 <main class="dashboard-layout">
@@ -60,9 +60,30 @@
                 <c:forEach var="product" items="${products}">
                     <tr>
                         <td>
-                            <c:if test="${not empty product.imagePath}"><img class="seller-product-thumb" src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />" alt="Product photo" loading="lazy"></c:if>
-                            <strong><c:out value="${product.name}" /></strong><c:if test="${not empty product.description}"><div class="seller-product-description"><c:out value="${product.description}" /></div></c:if></td>
-                        <td><c:out value="${product.category}" /></td>
+                            <div class="seller-product-cell">
+                                <c:if test="${not empty product.imagePath}">
+                                    <span class="seller-product-thumb-frame">
+                                        <img
+                                            class="seller-product-thumb"
+                                            src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />"
+                                            alt="Photo of <c:out value='${product.name}' />"
+                                            loading="lazy">
+                                    </span>
+                                </c:if>
+
+                                <div class="seller-product-copy">
+                                    <strong>
+                                        <c:out value="${product.name}" />
+                                    </strong>
+
+                                    <c:if test="${not empty product.description}">
+                                        <div class="seller-product-description">
+                                            <c:out value="${product.description}" />
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </div>
+                        </td>
                         <td class="price-cell"><fmt:formatNumber value="${product.price}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></td>
                         <td><c:out value="${product.stockQuantity}" /></td>
                         <td><c:choose><c:when test="${product.active}"><span class="status-pill status-active">Active</span></c:when><c:otherwise><span class="status-pill status-inactive">Inactive</span></c:otherwise></c:choose></td>
@@ -193,6 +214,7 @@
                                     <th>Order</th>
                                     <th>Date</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Your products</th>
                                     <th>Seller subtotal</th>
                                 </tr>
@@ -219,6 +241,56 @@
                                             <span class="status-pill">
                                                 <c:out value="${order.status}" />
                                             </span>
+                                        </td>
+
+                                        
+                                        <td>
+                                            <div class="seller-payment-cell">
+                                                <strong>
+                                                    <c:choose>
+                                                        <c:when test="${order.paymentMethod eq 'COD'}">
+                                                            Cash on delivery
+                                                        </c:when>
+                                                        <c:when test="${order.paymentMethod eq 'UPI'}">
+                                                            UPI · Demo
+                                                        </c:when>
+                                                        <c:when test="${order.paymentMethod eq 'CARD'}">
+                                                            Card · Demo
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:out value="${order.paymentMethod}" />
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </strong>
+
+                                                <c:choose>
+                                                    <c:when test="${order.paymentStatus eq 'SIMULATED'}">
+                                                        <span class="payment-status-pill payment-status-demo">
+                                                            Demo recorded
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'PAID'}">
+                                                        <span class="payment-status-pill payment-status-paid">
+                                                            Paid
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'FAILED'}">
+                                                        <span class="payment-status-pill payment-status-failed">
+                                                            Failed
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'REFUNDED'}">
+                                                        <span class="payment-status-pill">
+                                                            Refunded
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="payment-status-pill payment-status-pending">
+                                                            Pending
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
                                         </td>
 
                                         <td>

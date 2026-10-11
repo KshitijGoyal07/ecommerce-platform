@@ -27,8 +27,19 @@ public final class OrderDao {
      * inserts the order and its item price snapshots, then commits. Any failure rolls back
      * the stock changes and inserts together.
      */
+   public long placeOrder(long buyerId, List<OrderLineRequest> requestedLines,
+                       String shippingAddressSnapshot) throws SQLException {
+        return placeOrder(
+                buyerId,
+                requestedLines,
+                shippingAddressSnapshot,
+                "COD"
+        );
+    }
+
     public long placeOrder(long buyerId, List<OrderLineRequest> requestedLines,
-                           String shippingAddressSnapshot) throws SQLException {
+                        String shippingAddressSnapshot,
+                        String paymentMethod) throws SQLException {
         if (buyerId <= 0) {
             throw new IllegalArgumentException("Buyer ID must be positive.");
         }
@@ -38,6 +49,16 @@ public final class OrderDao {
         if (shippingAddressSnapshot == null || shippingAddressSnapshot.isBlank()) {
             throw new IllegalArgumentException("Shipping address snapshot must not be blank.");
         }
+        String selectedPaymentMethod =
+                paymentMethod == null ? "" : paymentMethod.trim();
+
+        if (!Set.of("COD", "UPI", "CARD").contains(selectedPaymentMethod)) {
+            throw new IllegalArgumentException("Select a valid payment method.");
+        }
+
+        String paymentStatus = "COD".equals(selectedPaymentMethod)
+                ? "PENDING"
+                : "SIMULATED";
 
         List<OrderLineRequest> lines = new ArrayList<>(requestedLines);
         if (lines.stream().anyMatch(java.util.Objects::isNull)) {
@@ -65,7 +86,14 @@ public final class OrderDao {
                     total = total.add(selected.unitPrice().multiply(BigDecimal.valueOf(line.quantity())));
                 }
 
-                long orderId = insertOrder(connection, buyerId, total, shippingAddressSnapshot.trim());
+                long orderId = insertOrder(
+                        connection,
+                        buyerId,
+                        total,
+                        shippingAddressSnapshot.trim(),
+                        selectedPaymentMethod,
+                        paymentStatus
+                );
                 insertOrderItems(connection, orderId, selectedLines);
                 connection.commit();
                 return orderId;
@@ -83,8 +111,12 @@ public final class OrderDao {
     /** Returns a buyer's order history newest first; callers cannot query another buyer's orders. */
     public List<PersistedOrder> findByBuyerId(long buyerId) throws SQLException {
         requirePositiveId(buyerId, "Buyer ID");
-        String sql = "SELECT order_id, buyer_id, status, total_amount, shipping_address_snapshot, created_at "
-                + "FROM orders WHERE buyer_id = ? ORDER BY created_at DESC, order_id DESC";
+        
+    String sql = "SELECT order_id, buyer_id, status, payment_method, payment_status, "
+            + "total_amount, shipping_address_snapshot, created_at "
+            + "FROM orders WHERE buyer_id = ? "
+            + "ORDER BY created_at DESC, order_id DESC";
+
         List<OrderHeader> headers = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -92,28 +124,49 @@ public final class OrderDao {
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     Timestamp created = resultSet.getTimestamp("created_at");
-                    headers.add(new OrderHeader(
-                            resultSet.getLong("order_id"),
-                            resultSet.getLong("buyer_id"),
-                            toModelStatus(resultSet.getString("status")),
-                            resultSet.getBigDecimal("total_amount"),
-                            resultSet.getString("shipping_address_snapshot"),
-                            created == null ? Instant.EPOCH : created.toInstant()));
+                    
+                headers.add(new OrderHeader(
+                        resultSet.getLong("order_id"),
+                        resultSet.getLong("buyer_id"),
+                        toModelStatus(resultSet.getString("status")),
+                        resultSet.getString("payment_method"),
+                        resultSet.getString("payment_status"),
+                        resultSet.getBigDecimal("total_amount"),
+                        resultSet.getString("shipping_address_snapshot"),
+                        created == null ? Instant.EPOCH : created.toInstant()));
+
                 }
             }
-            List<PersistedOrder> orders = new ArrayList<>();
-            for (OrderHeader header : headers) {
-                orders.add(new PersistedOrder(header.id(), header.buyerId(), header.status(), header.totalAmount(),
-                        header.shippingAddressSnapshot(), header.createdAt(), loadItems(connection, header.id())));
-            }
+            
+                List<PersistedOrder> orders = new ArrayList<>();
+
+                for (OrderHeader header : headers) {
+                    orders.add(new PersistedOrder(
+                            header.id(),
+                            header.buyerId(),
+                            header.status(),
+                            header.paymentMethod(),
+                            header.paymentStatus(),
+                            header.totalAmount(),
+                            header.shippingAddressSnapshot(),
+                            header.createdAt(),
+                            loadItems(connection, header.id())
+                    ));
+                }
+
             return List.copyOf(orders);
         }
     }
 
     public Optional<PersistedOrder> findById(long orderId) throws SQLException {
         requirePositiveId(orderId, "Order ID");
-        String sql = "SELECT order_id, buyer_id, status, total_amount, shipping_address_snapshot, created_at "
-                + "FROM orders WHERE order_id = ?";
+        
+       
+    String sql = "SELECT order_id, buyer_id, status, payment_method, payment_status, "
+            + "total_amount, shipping_address_snapshot, created_at "
+            + "FROM orders WHERE order_id = ?";
+
+
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, orderId);
@@ -123,12 +176,25 @@ public final class OrderDao {
                 }
                 long buyerId = resultSet.getLong("buyer_id");
                 OrderStatus status = toModelStatus(resultSet.getString("status"));
+                String paymentMethod = resultSet.getString("payment_method");
+                String paymentStatus = resultSet.getString("payment_status");
                 BigDecimal total = resultSet.getBigDecimal("total_amount");
                 String address = resultSet.getString("shipping_address_snapshot");
                 Timestamp created = resultSet.getTimestamp("created_at");
                 List<PersistedOrderItem> items = loadItems(connection, orderId);
-                return Optional.of(new PersistedOrder(orderId, buyerId, status, total, address,
-                        created == null ? Instant.EPOCH : created.toInstant(), items));
+                
+                return Optional.of(new PersistedOrder(
+                        orderId,
+                        buyerId,
+                        status,
+                        paymentMethod,
+                        paymentStatus,
+                        total,
+                        address,
+                        created == null ? Instant.EPOCH : created.toInstant(),
+                        items
+                ));
+
             }
         }
     }
@@ -211,19 +277,38 @@ public final class OrderDao {
         return new SelectedLine(line.productId(), name, line.quantity(), price);
     }
 
-    private static long insertOrder(Connection connection, long buyerId, BigDecimal total, String address)
-            throws SQLException {
-        String sql = "INSERT INTO orders (buyer_id, status, total_amount, shipping_address_snapshot) "
-                + "VALUES (?, 'PENDING', ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    private static long insertOrder(
+            Connection connection,
+            long buyerId,
+            BigDecimal total,
+            String address,
+            String paymentMethod,
+            String paymentStatus
+    ) throws SQLException {
+
+        String sql = "INSERT INTO orders "
+                + "(buyer_id, status, payment_method, payment_status, "
+                + "total_amount, shipping_address_snapshot) "
+                + "VALUES (?, 'PENDING', ?, ?, ?, ?)";
+
+        try (PreparedStatement statement =
+                    connection.prepareStatement(
+                            sql, Statement.RETURN_GENERATED_KEYS)) {
+
             statement.setLong(1, buyerId);
-            statement.setBigDecimal(2, total);
-            statement.setString(3, address);
+            statement.setString(2, paymentMethod);
+            statement.setString(3, paymentStatus);
+            statement.setBigDecimal(4, total);
+            statement.setString(5, address);
+
             statement.executeUpdate();
+
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (!keys.next()) {
-                    throw new SQLException("MySQL did not return a generated order ID.");
+                    throw new SQLException(
+                            "MySQL did not return a generated order ID.");
                 }
+
                 return keys.getLong(1);
             }
         }
@@ -311,7 +396,7 @@ public final class OrderDao {
     private record SelectedLine(long productId, String productName, int quantity, BigDecimal unitPrice) {
     }
 
-    private record OrderHeader(long id, long buyerId, OrderStatus status, BigDecimal totalAmount,
+    private record OrderHeader(long id, long buyerId, OrderStatus status, String paymentMethod, String paymentStatus, BigDecimal totalAmount,
                                String shippingAddressSnapshot, Instant createdAt) {
     }
 }
