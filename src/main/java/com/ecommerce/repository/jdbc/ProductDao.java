@@ -23,7 +23,8 @@ public class ProductDao {
                    COALESCE(c.name, 'Uncategorized') AS category_name,
                    p.price,
                    p.stock_quantity,
-                   p.is_active
+                   p.is_active,
+                   p.image_path
             FROM products p
             LEFT JOIN categories c ON c.category_id = p.category_id
             """;
@@ -43,8 +44,8 @@ public class ProductDao {
                 long categoryId = findOrCreateCategory(connection, draft.getCategory());
                 String sql = """
                         INSERT INTO products
-                            (seller_id, category_id, name, description, price, stock_quantity, is_active)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                            (seller_id, category_id, name, description, price, stock_quantity, is_active, image_path)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         """;
                 long generatedId;
                 try (PreparedStatement statement = connection.prepareStatement(
@@ -56,6 +57,7 @@ public class ProductDao {
                     statement.setBigDecimal(5, draft.getPrice());
                     statement.setInt(6, draft.getStockQuantity());
                     statement.setBoolean(7, draft.isActive());
+                    statement.setString(8, draft.getImagePath());
                     statement.executeUpdate();
                     try (ResultSet keys = statement.getGeneratedKeys()) {
                         if (!keys.next()) {
@@ -172,7 +174,7 @@ public class ProductDao {
                 long categoryId = findOrCreateCategory(connection, product.getCategory());
                 String sql = """
                         UPDATE products
-                        SET category_id = ?, name = ?, description = ?, price = ?
+                        SET category_id = ?, name = ?, description = ?, price = ?, image_path = ?
                         WHERE product_id = ? AND seller_id = ?
                         """;
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -180,8 +182,9 @@ public class ProductDao {
                     statement.setString(2, product.getName());
                     setNullableDescription(statement, 3, product.getDescription());
                     statement.setBigDecimal(4, product.getPrice());
-                    statement.setLong(5, product.getId());
-                    statement.setLong(6, sellerId);
+                    statement.setString(5, product.getImagePath());
+                    statement.setLong(6, product.getId());
+                    statement.setLong(7, sellerId);
                     statement.executeUpdate();
                 }
                 connection.commit();
@@ -347,7 +350,8 @@ public class ProductDao {
                 resultSet.getString("description"),
                 resultSet.getString("category_name"),
                 resultSet.getBigDecimal("price"),
-                resultSet.getInt("stock_quantity"));
+                resultSet.getInt("stock_quantity"),
+                resultSet.getString("image_path"));
         if (!resultSet.getBoolean("is_active")) {
             product.deactivate();
         }
@@ -408,7 +412,7 @@ public class ProductDao {
 
     private static Product copyWithId(Product product, long id) {
         Product persisted = new Product(id, product.getSellerId(), product.getName(), product.getDescription(),
-                product.getCategory(), product.getPrice(), product.getStockQuantity());
+                product.getCategory(), product.getPrice(), product.getStockQuantity(), product.getImagePath());
         if (!product.isActive()) {
             persisted.deactivate();
         }

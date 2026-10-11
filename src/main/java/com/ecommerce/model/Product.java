@@ -13,9 +13,15 @@ public class Product {
     private BigDecimal price;
     private int stockQuantity;
     private boolean active;
+    private String imagePath;
 
     public Product(long id, long sellerId, String name, String description,
                    String category, BigDecimal price, int stockQuantity) {
+        this(id, sellerId, name, description, category, price, stockQuantity, null);
+    }
+
+    public Product(long id, long sellerId, String name, String description,
+                   String category, BigDecimal price, int stockQuantity, String imagePath) {
         if (id < 0 || sellerId <= 0) {
             throw new IllegalArgumentException("Product ID cannot be negative and seller ID must be positive.");
         }
@@ -23,9 +29,9 @@ public class Product {
             throw new IllegalArgumentException("Stock quantity cannot be negative.");
         }
         this.id = id;
-        this.sellerId = sellerId;
         updateDetails(name, description, category, price);
         this.stockQuantity = stockQuantity;
+        this.imagePath = normalizeImagePath(imagePath);
         this.active = true;
     }
 
@@ -42,6 +48,25 @@ public class Product {
 
     public long getSellerId() {
         return sellerId;
+    }
+
+    /** Optional stored image filename; null means this listing has no photo. */
+    public synchronized String getImagePath() {
+        return imagePath;
+    }
+
+    /** Stores only a generated image filename, never an arbitrary path or URL. */
+    public synchronized void setImagePath(String imagePath) {
+        this.imagePath = normalizeImagePath(imagePath);
+    }
+
+    private static String normalizeImagePath(String imagePath) {
+        if (imagePath == null || imagePath.isBlank()) return null;
+        String value = imagePath.trim();
+        if (!value.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|png)")) {
+            throw new IllegalArgumentException("Product image filename is invalid.");
+        }
+        return value;
     }
 
     public synchronized String getName() {

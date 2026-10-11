@@ -34,3 +34,11 @@ These statements upgrade the existing read-only grants on those tables. No DELET
 ## Verification
 
 Run `mvn clean test` for input validation tests. For a local end-to-end check, sign in using a **Seller** account, create a product with an INR price, confirm it appears in the seller listing, then sign in as a Buyer and confirm the active product appears in the catalogue. Test edit, set-stock, and deactivate operations, and check that a different seller cannot update another seller's product.
+
+
+## Optional product photos
+
+- Product photos are optional. Sellers can create or edit listings without uploading an image.
+- Uploads accept JPEG and PNG files up to 5 MB. The app validates and re-encodes images before storage.
+- The database stores only the generated image filename. Files are saved outside the WAR by default in `<CATALINA_BASE>/marketsquare-uploads/products`; set `MARKETSQUARE_UPLOAD_DIR` to use a different persistent directory.
+- Fresh databases get the nullable `products.image_path` column from `src/main/resources/db/schema.sql`. Existing databases must run `src/main/resources/db/migration/V1__product_images.sql` once before deploying the updated code.

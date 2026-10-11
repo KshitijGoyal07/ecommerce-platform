@@ -41,6 +41,7 @@
                 <div class="product-grid">
                     <c:forEach var="product" items="${products}">
                         <article class="product-card">
+                            <c:if test="${not empty product.imagePath}"><img class="product-card-image" src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />" alt="Photo of <c:out value='${product.name}' />" loading="lazy"></c:if>
                             <div class="product-category"><c:out value="${product.category}" /></div>
                             <h3><a href="${pageContext.request.contextPath}/buyer/product?id=${product.id}"><c:out value="${product.name}" /></a></h3>
                             <p class="product-description"><c:out value="${product.description}" /></p>
@@ -92,6 +93,7 @@
             <div class="product-grid">
                 <c:forEach var="recentProduct" items="${recentlyViewedProducts}">
                     <article class="product-card">
+                        <c:if test="${not empty recentProduct.imagePath}"><img class="product-card-image" src="${pageContext.request.contextPath}/product-images/<c:out value='${recentProduct.imagePath}' />" alt="Photo of <c:out value='${recentProduct.name}' />" loading="lazy"></c:if>
                         <div class="product-category"><c:out value="${recentProduct.category}" /></div>
                         <h3><a href="${pageContext.request.contextPath}/buyer/product?id=${recentProduct.id}"><c:out value="${recentProduct.name}" /></a></h3>
                         <p class="product-description"><c:out value="${recentProduct.description}" /></p>

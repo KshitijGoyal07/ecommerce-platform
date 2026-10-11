@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS products (
     category_id BIGINT UNSIGNED NULL,
     name VARCHAR(180) NOT NULL,
     description TEXT NULL,
+    image_path VARCHAR(255) NULL,
     price DECIMAL(12,2) NOT NULL,
     stock_quantity INT UNSIGNED NOT NULL DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,

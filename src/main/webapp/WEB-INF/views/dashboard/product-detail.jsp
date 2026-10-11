@@ -23,6 +23,7 @@
 <main class="dashboard-layout">
     <p><a href="${pageContext.request.contextPath}/buyer/dashboard">← Back to marketplace</a></p>
     <section class="panel product-detail-panel">
+        <c:if test="${not empty product.imagePath}"><img class="product-detail-image" src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />" alt="Photo of <c:out value='${product.name}' />"></c:if>
         <p class="eyebrow"><c:out value="${product.category}" /></p>
         <h1 class="dashboard-title"><c:out value="${product.name}" /></h1>
         <p class="muted-copy"><c:out value="${product.description}" /></p>

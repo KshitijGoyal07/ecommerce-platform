@@ -60,6 +60,11 @@ public final class SellerDashboardServlet extends HttpServlet {
                 );
             }
             request.setAttribute("displayName", account.fullName());
+            String sellerView = request.getParameter("view");
+            if (sellerView == null || !java.util.Set.of("create", "listings", "sales", "orders").contains(sellerView)) {
+                sellerView = "create";
+            }
+            request.setAttribute("sellerView", sellerView);
             request.setAttribute("pageTitle", "Seller workspace | MarketSquare");
             request.setAttribute("csrfToken", CsrfTokens.getOrCreate(request.getSession(true)));
             HttpSession session = request.getSession(false);

@@ -32,6 +32,7 @@
                 <div class="product-grid">
                     <c:forEach var="product" items="${wishlistProducts}">
                         <article class="product-card">
+                            <c:if test="${not empty product.imagePath}"><img class="product-card-image" src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />" alt="Photo of <c:out value='${product.name}' />" loading="lazy"></c:if>
                             <div class="product-category"><c:out value="${product.category}" /></div>
                             <h3><c:out value="${product.name}" /></h3>
                             <p class="product-description"><c:out value="${product.description}" /></p>

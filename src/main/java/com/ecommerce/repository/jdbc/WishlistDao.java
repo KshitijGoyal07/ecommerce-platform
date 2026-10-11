@@ -18,7 +18,7 @@ public final class WishlistDao {
             SELECT p.product_id, p.seller_id, p.name,
                    COALESCE(p.description, '') AS description,
                    COALESCE(c.name, 'Uncategorized') AS category_name,
-                   p.price, p.stock_quantity, p.is_active
+                   p.price, p.stock_quantity, p.is_active, p.image_path
             FROM wishlists w
             JOIN products p ON p.product_id = w.product_id
             LEFT JOIN categories c ON c.category_id = p.category_id
@@ -85,7 +85,7 @@ public final class WishlistDao {
                 resultSet.getLong("product_id"), resultSet.getLong("seller_id"),
                 resultSet.getString("name"), resultSet.getString("description"),
                 resultSet.getString("category_name"), resultSet.getBigDecimal("price"),
-                resultSet.getInt("stock_quantity"));
+                resultSet.getInt("stock_quantity"), resultSet.getString("image_path"));
         if (!resultSet.getBoolean("is_active")) product.deactivate();
         return product;
     }
