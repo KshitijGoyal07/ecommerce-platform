@@ -33,4 +33,17 @@ public record PersistedOrder(
         createdAt = Objects.requireNonNull(createdAt, "Creation time is required.");
         items = List.copyOf(Objects.requireNonNull(items, "Order items are required."));
     }
+
+    // JavaBean-style accessors keep the record easy to render from JSP Expression Language.
+    public long getId() { return id; }
+    public long getBuyerId() { return buyerId; }
+    public OrderStatus getStatus() { return status; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public String getShippingAddressSnapshot() { return shippingAddressSnapshot; }
+    public Instant getCreatedAt() { return createdAt; }
+    public String getCreatedAtDisplay() {
+        return java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", java.util.Locale.ENGLISH)
+                .withZone(java.time.ZoneId.systemDefault()).format(createdAt);
+    }
+    public List<PersistedOrderItem> getItems() { return items; }
 }

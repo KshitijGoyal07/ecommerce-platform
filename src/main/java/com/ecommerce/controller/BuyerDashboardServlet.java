@@ -2,6 +2,7 @@ package com.ecommerce.controller;
 
 import com.ecommerce.model.UserAccount;
 import com.ecommerce.repository.jdbc.ProductDao;
+import com.ecommerce.security.CsrfTokens;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -29,6 +30,8 @@ public final class BuyerDashboardServlet extends HttpServlet {
             request.setAttribute("products", products);
             request.setAttribute("productCount", products.size());
             request.setAttribute("displayName", account.fullName());
+            request.setAttribute("csrfToken", CsrfTokens.getOrCreate(request.getSession(true)));
+            request.setAttribute("cartQuantity", CartSupport.getCart(request.getSession(true)).getTotalQuantity());
             request.setAttribute("pageTitle", "Buyer workspace | MarketSquare");
             request.getRequestDispatcher("/WEB-INF/views/dashboard/buyer.jsp").forward(request, response);
         } catch (SQLException exception) {

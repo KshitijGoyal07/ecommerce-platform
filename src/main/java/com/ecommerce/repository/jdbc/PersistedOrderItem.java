@@ -25,4 +25,11 @@ public record PersistedOrderItem(
             throw new IllegalArgumentException("Order prices cannot be negative.");
         }
     }
+
+    // JavaBean-style accessors for JSP Expression Language.
+    public long getProductId() { return productId; }
+    public String getProductName() { return productName; }
+    public int getQuantity() { return quantity; }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public BigDecimal getLineTotal() { return lineTotal; }
 }
