@@ -29,6 +29,7 @@ public class Product {
             throw new IllegalArgumentException("Stock quantity cannot be negative.");
         }
         this.id = id;
+        this.sellerId = sellerId;
         updateDetails(name, description, category, price);
         this.stockQuantity = stockQuantity;
         this.imagePath = normalizeImagePath(imagePath);
