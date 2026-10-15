@@ -108,10 +108,63 @@ public final class OrderDao {
         }
     }
 
+
+    /**
+     * Returns every marketplace order newest first.
+     * The calling servlet must restrict this operation to administrators.
+     */
+    public List<PersistedOrder> findAllForAdmin() throws SQLException {
+        String sql = "SELECT order_id, buyer_id, status, payment_method, payment_status, "
+                + "total_amount, shipping_address_snapshot, created_at "
+                + "FROM orders "
+                + "ORDER BY created_at DESC, order_id DESC";
+
+        List<OrderHeader> headers = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Timestamp created = resultSet.getTimestamp("created_at");
+
+                headers.add(new OrderHeader(
+                        resultSet.getLong("order_id"),
+                        resultSet.getLong("buyer_id"),
+                        toModelStatus(resultSet.getString("status")),
+                        resultSet.getString("payment_method"),
+                        resultSet.getString("payment_status"),
+                        resultSet.getBigDecimal("total_amount"),
+                        resultSet.getString("shipping_address_snapshot"),
+                        created == null ? Instant.EPOCH : created.toInstant()
+                ));
+            }
+
+            List<PersistedOrder> orders = new ArrayList<>();
+
+            for (OrderHeader header : headers) {
+                orders.add(new PersistedOrder(
+                        header.id(),
+                        header.buyerId(),
+                        header.status(),
+                        header.paymentMethod(),
+                        header.paymentStatus(),
+                        header.totalAmount(),
+                        header.shippingAddressSnapshot(),
+                        header.createdAt(),
+                        loadItems(connection, header.id())
+                ));
+            }
+
+            return List.copyOf(orders);
+        }
+    }
+
+
     /** Returns a buyer's order history newest first; callers cannot query another buyer's orders. */
     public List<PersistedOrder> findByBuyerId(long buyerId) throws SQLException {
         requirePositiveId(buyerId, "Buyer ID");
-        
+
     String sql = "SELECT order_id, buyer_id, status, payment_method, payment_status, "
             + "total_amount, shipping_address_snapshot, created_at "
             + "FROM orders WHERE buyer_id = ? "
@@ -124,7 +177,7 @@ public final class OrderDao {
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     Timestamp created = resultSet.getTimestamp("created_at");
-                    
+
                 headers.add(new OrderHeader(
                         resultSet.getLong("order_id"),
                         resultSet.getLong("buyer_id"),
@@ -137,7 +190,7 @@ public final class OrderDao {
 
                 }
             }
-            
+
                 List<PersistedOrder> orders = new ArrayList<>();
 
                 for (OrderHeader header : headers) {
@@ -160,8 +213,8 @@ public final class OrderDao {
 
     public Optional<PersistedOrder> findById(long orderId) throws SQLException {
         requirePositiveId(orderId, "Order ID");
-        
-       
+
+
     String sql = "SELECT order_id, buyer_id, status, payment_method, payment_status, "
             + "total_amount, shipping_address_snapshot, created_at "
             + "FROM orders WHERE order_id = ?";
@@ -182,7 +235,7 @@ public final class OrderDao {
                 String address = resultSet.getString("shipping_address_snapshot");
                 Timestamp created = resultSet.getTimestamp("created_at");
                 List<PersistedOrderItem> items = loadItems(connection, orderId);
-                
+
                 return Optional.of(new PersistedOrder(
                         orderId,
                         buyerId,

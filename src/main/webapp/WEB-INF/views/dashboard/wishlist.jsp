@@ -36,7 +36,52 @@
                             <div class="product-category"><c:out value="${product.category}" /></div>
                             <h3><c:out value="${product.name}" /></h3>
                             <p class="product-description"><c:out value="${product.description}" /></p>
-                            <div class="product-meta"><strong><fmt:formatNumber value="${product.price}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></strong><span><c:out value="${product.stockQuantity}" /> in stock</span></div>
+                            <div class="product-meta">
+                                <div>
+                                    <strong>
+                                        Current price:
+                                        <fmt:formatNumber value="${product.price}"
+                                                        type="currency" currencyCode="INR"
+                                                        minFractionDigits="2" maxFractionDigits="2" />
+                                    </strong>
+
+                                    <p class="muted-copy">
+                                        Saved price:
+                                        <fmt:formatNumber
+                                            value="${wishlistSavedPrices[product.id]}"
+                                            type="currency" currencyCode="INR"
+                                            minFractionDigits="2" maxFractionDigits="2" />
+                                    </p>
+
+                                    <c:choose>
+                                        <c:when test="${product.price < wishlistSavedPrices[product.id]}">
+                                            <p class="status-pill">
+                                                Price dropped by
+                                                <fmt:formatNumber
+                                                    value="${wishlistSavedPrices[product.id] - product.price}"
+                                                    type="currency" currencyCode="INR"
+                                                    minFractionDigits="2" maxFractionDigits="2" />
+                                            </p>
+                                        </c:when>
+
+                                        <c:when test="${product.price > wishlistSavedPrices[product.id]}">
+                                            <p class="status-pill">
+                                                Price increased by
+                                                <fmt:formatNumber
+                                                    value="${product.price - wishlistSavedPrices[product.id]}"
+                                                    type="currency" currencyCode="INR"
+                                                    minFractionDigits="2" maxFractionDigits="2" />
+                                            </p>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <p class="muted-copy">Price unchanged since saved.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+
+                                <span><c:out value="${product.stockQuantity}" /> in stock</span>
+                            </div>
                             <c:choose><c:when test="${product.active}"><p><a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/product?id=${product.id}">View details</a></p></c:when><c:otherwise><p class="status-pill status-inactive">Currently unavailable</p></c:otherwise></c:choose>
                             <c:if test="${product.active and product.stockQuantity > 0}">
                                 <form method="post" action="${pageContext.request.contextPath}/buyer/cart" class="add-to-cart-form">

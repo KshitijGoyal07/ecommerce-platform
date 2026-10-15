@@ -19,6 +19,10 @@
 <body class="app-body">
 <header class="site-header">
     <a class="brand" href="${pageContext.request.contextPath}/home"><span class="brand-mark">M</span><span>MarketSquare</span></a>
+    <a class="button button-secondary"
+    href="${pageContext.request.contextPath}/buyer/account">
+        My account
+    </a>
     <nav class="header-user" aria-label="Buyer navigation">
         <span>Buyer workspace</span>
         <a class="button button-secondary" href="${pageContext.request.contextPath}/buyer/cart">Cart (<c:out value="${cartQuantity}" />)</a>

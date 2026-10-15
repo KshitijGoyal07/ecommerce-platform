@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 /** JDBC persistence for a buyer's saved products. */
 public final class WishlistDao {
@@ -28,7 +31,12 @@ public final class WishlistDao {
     public boolean add(long buyerId, long productId) throws SQLException {
         requirePositiveId(buyerId, "Buyer ID");
         requirePositiveId(productId, "Product ID");
-        String sql = "INSERT IGNORE INTO wishlists (buyer_id, product_id) VALUES (?, ?)";
+        String sql = """
+                    INSERT IGNORE INTO wishlists (buyer_id, product_id, saved_price)
+                    SELECT ?, p.product_id, p.price
+                    FROM products p
+                    WHERE p.product_id = ?
+                    """;
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, buyerId);
@@ -63,6 +71,37 @@ public final class WishlistDao {
                 return List.copyOf(products);
             }
         }
+    }
+
+     /** Returns the price captured when each product was added to a buyer's wishlist. */
+    public Map<Long, BigDecimal> findSavedPricesByBuyerId(long buyerId)
+            throws SQLException {
+
+        requirePositiveId(buyerId, "Buyer ID");
+
+        String sql = """
+                SELECT product_id, saved_price
+                FROM wishlists
+                WHERE buyer_id = ?
+                """;
+
+        Map<Long, BigDecimal> prices = new HashMap<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, buyerId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    prices.put(
+                            resultSet.getLong("product_id"),
+                            resultSet.getBigDecimal("saved_price"));
+                }
+            }
+        }
+
+        return Map.copyOf(prices);
     }
 
     /** Returns the product IDs already saved by a buyer. */

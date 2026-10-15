@@ -273,6 +273,25 @@ public class ProductDao {
         }
     }
 
+    /**
+     * Reactivates an inactive listing.
+     * Administrator authorization must be checked by the calling servlet.
+     */
+    public boolean activate(long productId) throws SQLException {
+        requirePositiveId(productId, "Product ID");
+
+        String sql = "UPDATE products "
+                + "SET is_active = TRUE "
+                + "WHERE product_id = ? AND is_active = FALSE";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, productId);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
     /** Atomically reserves stock in MySQL, so concurrent buyers cannot oversell the same units. */
     public void reserveStock(long productId, int quantity) throws SQLException {
         requirePositiveId(productId, "Product ID");
