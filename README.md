@@ -51,28 +51,54 @@ Install and configure the following before running the application:
 
 MarketSquare uses MySQL 8.4 with JDBC for database connectivity.
 
-### Initialize the database
+### Initialize a fresh database
 
 1. Start MySQL Server and open the MySQL command-line client.
-2. Execute the project's schema file:
+2. Run the schema file using its absolute path (replace the example path with the location where you cloned the repository):
 
-   `src/main/resources/db/schema.sql`
+   ```sql
+   SOURCE C:/path/to/ecommerce-platform/src/main/resources/db/schema.sql;
+   ```
 
-   In the MySQL client, use the `SOURCE` command with the absolute path to the schema file.
-3. Verify the database and tables:
+3. Apply the payment and wishlist-price migrations. These are required for a fresh database because the base schema does not yet define those columns:
+
+   ```sql
+   USE marketsquare;
+   SOURCE C:/path/to/ecommerce-platform/src/main/resources/db/migration/V2__order_payment_details.sql;
+   SOURCE C:/path/to/ecommerce-platform/src/main/resources/db/migration/V3__wishlist_price_snapshot.sql;
+   ```
+
+   Replace `C:/path/to/ecommerce-platform` with your actual project path. MySQL's `SOURCE` command accepts forward slashes in Windows paths.
+
+4. Verify the database and tables:
 
    ```sql
    USE marketsquare;
    SHOW TABLES;
+   SHOW COLUMNS FROM wishlists LIKE 'saved_price';
    ```
 
-4. Check the database migrations in `src/main/resources/db/migration/` before applying them:
-   - `V1__product_images.sql` adds product-image support where it is missing.
-   - `V2__order_payment_details.sql` adds the order payment details where those changes have not already been applied.
+   The last command should show the `saved_price` column, which the wishlist uses to compare saved prices with current prices.
 
-   Apply migrations only when required by your current database schema. Back up an existing database before making schema changes, and do not blindly rerun migrations.
+The base schema already includes the nullable `products.image_path` column, so **do not run `V1__product_images.sql` on a fresh database**.
 
-For the complete schema instructions, see [`docs/database-schema.md`](docs/database-schema.md).
+### Applying migrations to an existing database
+
+Back up the database before changing its schema. Do not blindly run every migration against an existing database:
+
+- `V1__product_images.sql`: run once only if `products.image_path` is missing. Check with `SHOW COLUMNS FROM products LIKE 'image_path';`.
+- `V2__order_payment_details.sql`: adds missing order payment columns and skips columns that already exist.
+- `V3__wishlist_price_snapshot.sql`: required for wishlist price tracking, but it is **not safe to rerun** after `saved_price` already exists. Check with `SHOW COLUMNS FROM wishlists LIKE 'saved_price';` and run V3 only if that column is missing.
+
+Select the `marketsquare` database before applying V3:
+
+```sql
+USE marketsquare;
+```
+
+Then use `SOURCE` with the absolute path to the specific migration file you need.
+
+For the complete schema overview, see [`docs/database-schema.md`](docs/database-schema.md).
 
 ### Configure database credentials
 
