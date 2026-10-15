@@ -1,10 +1,10 @@
 # MarketSquare — Online E-Commerce Platform
 
-MarketSquare is a Java-based e-commerce web application developed as an academic team project by a team of four. We built it to bring buyer, seller, and administrator workflows together in one place, from browsing products and placing demo orders to managing listings, inventory, and marketplace activity.
+MarketSquare is our four-person Java web project for the GUVI online e-commerce brief. The brief asked us to build a platform where sellers can list products, buyers can purchase them, and admins can manage the overall system. We built separate dashboards for the three roles and connected the main workflows to a MySQL database.
 
 ## Project team
 
-We developed MarketSquare collaboratively as a team of four. Our shared work covered the buyer, seller, and administrator workflows, Java web application structure, JDBC/MySQL persistence, testing, and project documentation.
+We worked on MarketSquare as a team of four. Together, we built and tested the buyer, seller, and admin workflows, the Java web application, and the JDBC/MySQL data layer. This repository contains our project code and setup instructions.
 
 ## Features
 
