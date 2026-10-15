@@ -43,6 +43,56 @@
                 <label for="shippingAddress">Delivery address</label>
                 <textarea id="shippingAddress" name="shippingAddress" rows="5" minlength="10" maxlength="1000" required placeholder="Recipient name, house/street, area, city, state, PIN code"></textarea>
                 <p class="small-note">Use a test address for this academic project. No payment or delivery provider will be contacted.</p>
+                
+                <fieldset class="payment-method-section">
+                    <legend>Payment method</legend>
+
+                    <p class="small-note">
+                        Choose how you would like to pay. UPI and card are demonstrations
+                        only; no real payment will be processed.
+                    </p>
+
+                    <label class="payment-method-option" for="paymentCod">
+                        <input
+                            type="radio"
+                            id="paymentCod"
+                            name="paymentMethod"
+                            value="COD"
+                            checked
+                            required>
+                        <span class="payment-method-copy">
+                            <strong>Cash on delivery</strong>
+                            <small>Pay when your order arrives.</small>
+                        </span>
+                    </label>
+
+                    <label class="payment-method-option" for="paymentUpi">
+                        <input
+                            type="radio"
+                            id="paymentUpi"
+                            name="paymentMethod"
+                            value="UPI"
+                            required>
+                        <span class="payment-method-copy">
+                            <strong>UPI — Demo</strong>
+                            <small>Simulated payment; no UPI app is opened.</small>
+                        </span>
+                    </label>
+
+                    <label class="payment-method-option" for="paymentCard">
+                        <input
+                            type="radio"
+                            id="paymentCard"
+                            name="paymentMethod"
+                            value="CARD"
+                            required>
+                        <span class="payment-method-copy">
+                            <strong>Card — Demo</strong>
+                            <small>No card details are requested or stored.</small>
+                        </span>
+                    </label>
+                </fieldset>
+
                 <button class="button button-primary form-submit place-order-button" type="submit">Place demo order <span aria-hidden="true">→</span></button>
             </form>
         </section>

@@ -61,7 +61,9 @@
                                             <button type="button" data-quantity-step="1" aria-label="Increase quantity">+</button>
                                         </div>
                                     </div>
-                                    <button class="button button-secondary update-cart-button" type="submit">Update quantity</button>
+                                    <noscript>
+                                        <button class="button button-secondary" type="submit">Update quantity</button>
+                                    </noscript>
                                 </form>
                                 <form method="post" action="${pageContext.request.contextPath}/buyer/cart" class="cart-remove-form">
                                     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
@@ -93,19 +95,63 @@
 <footer class="site-footer"><span>MarketSquare · Buyer</span><span>Session cart · INR pricing</span></footer>
 <script>
 (() => {
-  document.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-quantity-step]');
-    if (!button) return;
-    const control = button.closest('.quantity-control');
-    const input = control && control.querySelector('input[type="number"]');
-    if (!input) return;
-    const min = Number(input.min || 1);
-    const max = Number(input.max || 99);
-    const current = Number(input.value || min);
-    const step = Number(button.dataset.quantityStep || 0);
-    input.value = String(Math.min(max, Math.max(min, current + step)));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  });
+    function saveCartForm(form) {
+        if (!form || form.dataset.submitting === "true") {
+            return;
+        }
+
+        if (!form.reportValidity()) {
+            return;
+        }
+
+        form.dataset.submitting = "true";
+
+        form.querySelectorAll("[data-quantity-step]").forEach(button => {
+            button.disabled = true;
+        });
+
+        form.requestSubmit();
+    }
+
+    document.addEventListener("click", event => {
+        const button = event.target.closest("[data-quantity-step]");
+        if (!button) return;
+
+        const control = button.closest(".quantity-control");
+        const input = control?.querySelector('input[name="quantity"]');
+        if (!input) return;
+
+        const min = Number(input.min || 1);
+        const max = Number(input.max || 99);
+        const current = Number(input.value || min);
+        const step = Number(button.dataset.quantityStep || 0);
+        const updated = Math.min(max, Math.max(min, current + step));
+
+        if (updated === current) return;
+
+        input.value = String(updated);
+
+        const cartForm = button.closest(".cart-quantity-form");
+
+        if (cartForm) {
+            saveCartForm(cartForm);
+        } else {
+            input.dispatchEvent(
+                new Event("change", { bubbles: true })
+            );
+        }
+    });
+
+    // Save manually typed quantities when the field changes.
+    document.addEventListener("change", event => {
+        const input = event.target;
+
+        if (
+            input.matches?.('.cart-quantity-form input[name="quantity"]')
+        ) {
+            saveCartForm(input.closest(".cart-quantity-form"));
+        }
+    });
 })();
 </script>
 </body>

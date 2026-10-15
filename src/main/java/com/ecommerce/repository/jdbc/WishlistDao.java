@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 /** JDBC persistence for a buyer's saved products. */
 public final class WishlistDao {
@@ -18,7 +21,7 @@ public final class WishlistDao {
             SELECT p.product_id, p.seller_id, p.name,
                    COALESCE(p.description, '') AS description,
                    COALESCE(c.name, 'Uncategorized') AS category_name,
-                   p.price, p.stock_quantity, p.is_active
+                   p.price, p.stock_quantity, p.is_active, p.image_path
             FROM wishlists w
             JOIN products p ON p.product_id = w.product_id
             LEFT JOIN categories c ON c.category_id = p.category_id
@@ -28,7 +31,12 @@ public final class WishlistDao {
     public boolean add(long buyerId, long productId) throws SQLException {
         requirePositiveId(buyerId, "Buyer ID");
         requirePositiveId(productId, "Product ID");
-        String sql = "INSERT IGNORE INTO wishlists (buyer_id, product_id) VALUES (?, ?)";
+        String sql = """
+                    INSERT IGNORE INTO wishlists (buyer_id, product_id, saved_price)
+                    SELECT ?, p.product_id, p.price
+                    FROM products p
+                    WHERE p.product_id = ?
+                    """;
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, buyerId);
@@ -65,6 +73,37 @@ public final class WishlistDao {
         }
     }
 
+     /** Returns the price captured when each product was added to a buyer's wishlist. */
+    public Map<Long, BigDecimal> findSavedPricesByBuyerId(long buyerId)
+            throws SQLException {
+
+        requirePositiveId(buyerId, "Buyer ID");
+
+        String sql = """
+                SELECT product_id, saved_price
+                FROM wishlists
+                WHERE buyer_id = ?
+                """;
+
+        Map<Long, BigDecimal> prices = new HashMap<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, buyerId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    prices.put(
+                            resultSet.getLong("product_id"),
+                            resultSet.getBigDecimal("saved_price"));
+                }
+            }
+        }
+
+        return Map.copyOf(prices);
+    }
+
     /** Returns the product IDs already saved by a buyer. */
     public Set<Long> findProductIdsByBuyerId(long buyerId) throws SQLException {
         requirePositiveId(buyerId, "Buyer ID");
@@ -85,7 +124,7 @@ public final class WishlistDao {
                 resultSet.getLong("product_id"), resultSet.getLong("seller_id"),
                 resultSet.getString("name"), resultSet.getString("description"),
                 resultSet.getString("category_name"), resultSet.getBigDecimal("price"),
-                resultSet.getInt("stock_quantity"));
+                resultSet.getInt("stock_quantity"), resultSet.getString("image_path"));
         if (!resultSet.getBoolean("is_active")) product.deactivate();
         return product;
     }

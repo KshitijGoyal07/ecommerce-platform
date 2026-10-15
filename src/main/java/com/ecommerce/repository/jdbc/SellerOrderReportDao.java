@@ -22,7 +22,7 @@ import java.util.Map;
  * Seller-scoped order history and sales reports.
  *
  * Only order items belonging to the requested seller are returned.
- * Buyer delivery addresses and other sellers' items are never exposed.
+ * Buyer name and address snapshot are shown only for orders containing the requested seller's products.
  */
 public final class SellerOrderReportDao {
 
@@ -43,11 +43,16 @@ public final class SellerOrderReportDao {
                 SELECT
                     o.order_id,
                     o.status,
+                    o.payment_method,
+                    o.payment_status,
                     o.created_at,
+                    u.full_name AS buyer_name,
+                    o.shipping_address_snapshot,
                     p.name AS product_name,
                     oi.quantity,
                     oi.unit_price
                 FROM orders o
+                JOIN users u ON u.user_id = o.buyer_id
                 JOIN order_items oi ON oi.order_id = o.order_id
                 JOIN products p ON p.product_id = oi.product_id
                 WHERE p.seller_id = ?
@@ -74,10 +79,16 @@ public final class SellerOrderReportDao {
 
                     String status = displayStatus(
                             results.getString("status"));
+                    String paymentMethod = results.getString("payment_method");
+                    String paymentStatus = results.getString("payment_status");
+                    String buyerName = results.getString("buyer_name");
+                    String shippingAddressSnapshot =
+                            results.getString("shipping_address_snapshot");
 
                     SellerOrderView order = orders.computeIfAbsent(
                             orderId,
-                            id -> new SellerOrderView(id, status, createdAt));
+                            id -> new SellerOrderView(
+                                    id, status, createdAt, buyerName, shippingAddressSnapshot, paymentMethod, paymentStatus));
 
                     BigDecimal unitPrice =
                             results.getBigDecimal("unit_price");
@@ -157,14 +168,32 @@ public final class SellerOrderReportDao {
         private final long orderId;
         private final String status;
         private final Instant createdAt;
+        private final String buyerName;
+        private final String shippingAddressSnapshot;
+        private final String paymentMethod;
+        private final String paymentStatus;
         private final List<SellerOrderItemView> items = new ArrayList<>();
         private BigDecimal subtotal = BigDecimal.ZERO;
 
         private SellerOrderView(
-                long orderId, String status, Instant createdAt) {
+                long orderId,
+                String status,
+                Instant createdAt,
+                String buyerName,
+                String shippingAddressSnapshot,
+                String paymentMethod,
+                String paymentStatus) {
             this.orderId = orderId;
             this.status = status;
             this.createdAt = createdAt;
+            this.buyerName = buyerName == null ? "Unknown buyer" : buyerName;
+            this.shippingAddressSnapshot = shippingAddressSnapshot == null
+                    ? "" : shippingAddressSnapshot;
+            this.paymentMethod = paymentMethod == null
+                    ? "COD" : paymentMethod;
+
+            this.paymentStatus = paymentStatus == null
+                    ? "PENDING" : paymentStatus;
         }
 
         private void addItem(SellerOrderItemView item) {
@@ -180,8 +209,24 @@ public final class SellerOrderReportDao {
             return status;
         }
 
+        public String getPaymentMethod() {
+            return paymentMethod;
+        }
+
+        public String getPaymentStatus() {
+            return paymentStatus;
+        }
+
         public String getCreatedAtDisplay() {
             return DATE_FORMAT.format(createdAt);
+        }
+
+        public String getBuyerName() {
+            return buyerName;
+        }
+
+        public String getShippingAddressSnapshot() {
+            return shippingAddressSnapshot;
         }
 
         public List<SellerOrderItemView> getItems() {

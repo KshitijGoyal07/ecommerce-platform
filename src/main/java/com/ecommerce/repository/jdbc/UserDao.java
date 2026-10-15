@@ -94,6 +94,90 @@ public final class UserDao {
         }
     }
 
+    /**
+     * Returns all user accounts, including deactivated accounts.
+     */
+    public List<UserAccount> findAllAccounts() throws SQLException {
+        String sql = "SELECT user_id, full_name, email, role, is_active, created_at "
+                + "FROM users ORDER BY user_id";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery()) {
+
+            List<UserAccount> accounts = new ArrayList<>();
+
+            while (resultSet.next()) {
+                accounts.add(mapAccount(resultSet));
+            }
+
+            return List.copyOf(accounts);
+        }
+    }
+
+    /**
+     * Updates account details and the assigned role.
+     * Passwords are deliberately not changed by this method.
+     */
+    public boolean updateAccount(
+            long userId, String fullName, String email, Role role)
+            throws SQLException {
+
+        requirePositiveId(userId);
+
+        String normalizedName = requireText(fullName, "Full name");
+        String normalizedEmail = normalizeEmail(email);
+        Role safeRole = Objects.requireNonNull(role, "Role is required.");
+
+        if (normalizedName.length() > 120) {
+            throw new IllegalArgumentException(
+                    "Full name must be 120 characters or fewer.");
+        }
+
+        if (normalizedEmail.length() > 254) {
+            throw new IllegalArgumentException(
+                    "Email must be 254 characters or fewer.");
+        }
+
+        String sql = "UPDATE users "
+                + "SET full_name = ?, email = ?, role = ? "
+                + "WHERE user_id = ?";
+
+        int affected;
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, normalizedName);
+            statement.setString(2, normalizedEmail);
+            statement.setString(3, safeRole.name());
+            statement.setLong(4, userId);
+
+            affected = statement.executeUpdate();
+        }
+
+        // An unchanged account may produce zero affected rows.
+        return affected > 0 || findById(userId).isPresent();
+    }
+
+    /**
+     * Reactivates a previously deactivated account.
+     */
+    public boolean activate(long userId) throws SQLException {
+        requirePositiveId(userId);
+
+        String sql = "UPDATE users "
+                + "SET is_active = TRUE "
+                + "WHERE user_id = ? AND is_active = FALSE";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, userId);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
     public List<UserAccount> findAllActive() throws SQLException {
         String sql = "SELECT user_id, full_name, email, role, is_active, created_at "
                 + "FROM users WHERE is_active = TRUE ORDER BY user_id";
@@ -116,6 +200,33 @@ public final class UserDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
             return statement.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Permanently deletes an account when database relationships allow it.
+     * Linked order or product records are preserved by refusing the deletion.
+     */
+    public boolean deleteAccount(long userId) throws SQLException {
+        requirePositiveId(userId);
+
+        String sql = "DELETE FROM users WHERE user_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, userId);
+            return statement.executeUpdate() == 1;
+
+        } catch (SQLException exception) {
+            if ("23000".equals(exception.getSQLState())) {
+                throw new IllegalArgumentException(
+                        "This account has linked records and cannot be permanently "
+                                + "deleted. Deactivate it instead.",
+                        exception);
+            }
+
+            throw exception;
         }
     }
 

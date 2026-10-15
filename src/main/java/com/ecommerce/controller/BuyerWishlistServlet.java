@@ -35,6 +35,9 @@ public final class BuyerWishlistServlet extends HttpServlet {
         }
         try {
             request.setAttribute("wishlistProducts", wishlistDao.findByBuyerId(account.id()));
+            request.setAttribute(
+                "wishlistSavedPrices",
+                wishlistDao.findSavedPricesByBuyerId(account.id()));
             request.setAttribute("displayName", account.fullName());
             request.setAttribute("cartQuantity", CartSupport.getCart(session).getTotalQuantity());
             request.setAttribute("csrfToken", CsrfTokens.getOrCreate(session));

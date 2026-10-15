@@ -12,6 +12,8 @@ public record PersistedOrder(
         long id,
         long buyerId,
         OrderStatus status,
+        String paymentMethod,
+        String paymentStatus,
         BigDecimal totalAmount,
         String shippingAddressSnapshot,
         Instant createdAt,
@@ -22,6 +24,12 @@ public record PersistedOrder(
             throw new IllegalArgumentException("Order ID and buyer ID must be positive.");
         }
         status = Objects.requireNonNull(status, "Order status is required.");
+        
+        paymentMethod = Objects.requireNonNull(
+                paymentMethod, "Payment method is required.");
+
+        paymentStatus = Objects.requireNonNull(
+                paymentStatus, "Payment status is required.");
         totalAmount = Objects.requireNonNull(totalAmount, "Order total is required.");
         if (totalAmount.signum() < 0) {
             throw new IllegalArgumentException("Order total cannot be negative.");
@@ -37,6 +45,13 @@ public record PersistedOrder(
     // JavaBean-style accessors keep the record easy to render from JSP Expression Language.
     public long getId() { return id; }
     public long getBuyerId() { return buyerId; }
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
     public OrderStatus getStatus() { return status; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public String getShippingAddressSnapshot() { return shippingAddressSnapshot; }

@@ -1,108 +1,170 @@
-# MarketSquare — Online E-commerce Platform
+# MarketSquare — Online E-Commerce Platform
 
-A role-based e-commerce web application for an academic Java project. The planned roles are **Buyer**, **Seller**, and **Admin**.
+MarketSquare is a Java-based e-commerce web application developed as an academic project. It provides buyer and seller workspaces for browsing products, managing shopping carts, placing demo orders, and managing product listings.
 
-> **Current status:** Phase 1 starter scaffold. The landing page and Maven web-app structure are in place. Authentication, dashboards, data persistence, and shopping workflows will be added in later phases; this repository is not yet the complete application.
+## Features
 
-## Planned technology stack
+### Buyer Workspace
+- Browse products and view product details.
+- Filter products by category and price range.
+- Sort products by price.
+- Optionally display out-of-stock products.
+- Save products to a wishlist and revisit viewed products.
+- Add products to the cart and adjust quantities using plus/minus controls.
+- Review checkout details, delivery addresses, and order totals.
+- View order history, payment methods, and payment statuses.
 
-- Java 17 or later
-- Maven for dependency management and builds
-- Jakarta Servlets and JSP for the web layer
-- Apache Tomcat 10.1 for local deployment
-- MySQL with JDBC for persistence
-- HTML and CSS for the user interface
+### Seller Workspace
+- Create, edit, and manage product listings.
+- Upload, replace, and remove optional product images.
+- Update inventory quantities and manage listing availability.
+- Reactivate inactive product listings.
+- Review orders and sales summaries.
+- View buyer, delivery, and payment information associated with orders.
 
-## Features planned
+### Payment Demonstration
+The application supports Cash on Delivery (COD), UPI Demo, and Card Demo. UPI and card payments are simulated for demonstration purposes; no real payment is processed.
 
-### Buyer
-- Browse and search products
-- Purchase products and view order confirmations
-- Track orders and delivery status
-- Manage wishlist and recently viewed products
-- Manage account details, payment-method records, and addresses
+## Technology Stack
 
-### Seller
-- Create, edit, and remove product listings
-- Track inventory and low-stock levels
-- Process orders for their products
-- Review sales summaries
+- **Language:** Java
+- **Web layer:** Jakarta Servlets and JSP
+- **Build tool:** Apache Maven
+- **Database:** MySQL with JDBC
+- **Application server:** Apache Tomcat 10.1
+- **Frontend:** HTML and CSS, with JavaScript for interactive controls
+- **Testing:** JUnit through Maven
 
-### Admin
-- Manage users and roles
-- Oversee product listings
-- Manage and update orders
-- Review system activity
-
-## Project structure
-
-```text
-src/main/java/com/ecommerce/controller/   # HTTP controllers (Servlets)
-src/main/webapp/WEB-INF/views/             # JSP views, not directly public
-src/main/webapp/assets/css/                # Stylesheets
-src/main/webapp/WEB-INF/web.xml            # Web application configuration
-pom.xml                                    # Maven configuration
-```
+The project uses Jakarta Servlet APIs and targets Java 17 compatibility.
 
 ## Prerequisites
 
-1. A JDK 17+ installed and available in the VS Code terminal.
-2. Git installed.
-3. Apache Maven installed, or the VS Code Maven extension configured to use Maven.
-4. Apache Tomcat 10.1 configured for local deployment. The Servlet API dependency is supplied by Tomcat at runtime.
-5. MySQL will be required from the database phase onward.
+Install and configure the following before running the application:
 
-## Build the project
+1. JDK 17 or later.
+2. Apache Maven.
+3. MySQL Server.
+4. Apache Tomcat 10.1.
+5. Git, if cloning the repository.
 
-Open the project folder in VS Code, open **Terminal → New Terminal**, and run:
+## Database Configuration
 
-```bash
+MarketSquare uses MySQL 8.4 with JDBC for database connectivity.
+
+### Initialize the database
+
+1. Start MySQL Server and open the MySQL command-line client.
+2. Execute the project's schema file:
+
+   `src/main/resources/db/schema.sql`
+
+   In the MySQL client, use the `SOURCE` command with the absolute path to the schema file.
+3. Verify the database and tables:
+
+   ```sql
+   USE marketsquare;
+   SHOW TABLES;
+   ```
+
+4. Check the database migrations in `src/main/resources/db/migration/` before applying them:
+   - `V1__product_images.sql` adds product-image support where it is missing.
+   - `V2__order_payment_details.sql` adds the order payment details where those changes have not already been applied.
+
+   Apply migrations only when required by your current database schema. Back up an existing database before making schema changes, and do not blindly rerun migrations.
+
+For the complete schema instructions, see [`docs/database-schema.md`](docs/database-schema.md).
+
+### Configure database credentials
+
+The application reads its database connection settings from environment variables:
+
+- `MARKETSQUARE_DB_URL` — JDBC connection URL; defaults to `jdbc:mysql://localhost:3306/marketsquare?serverTimezone=UTC`.
+- `MARKETSQUARE_DB_USER` — MySQL username.
+- `MARKETSQUARE_DB_PASSWORD` — MySQL password.
+
+For Windows PowerShell, set the variables in the terminal session used to start Tomcat:
+
+```powershell
+$env:MARKETSQUARE_DB_URL = "jdbc:mysql://localhost:3306/marketsquare?serverTimezone=UTC"
+$env:MARKETSQUARE_DB_USER = "marketsquare_app"
+
+$securePassword = Read-Host "Enter the database password" -AsSecureString
+$env:MARKETSQUARE_DB_PASSWORD = [System.Net.NetworkCredential]::new("", $securePassword).Password
+```
+
+Use the username and password configured for your own MySQL installation. The `marketsquare_app` username above is an example; create and configure that account with the database privileges the application requires before using it.
+
+Keep passwords out of source code and Git commits. For additional JDBC and persistence details, see [`docs/jdbc-and-product-persistence.md`](docs/jdbc-and-product-persistence.md).
+
+## Build and Test
+
+Open a terminal in the directory containing `pom.xml`.
+
+Run the automated tests:
+
+```powershell
+mvn clean test
+```
+
+Build the deployable WAR file:
+
+```powershell
 mvn clean package
 ```
 
-A successful build creates `target/ecommerce-platform.war`.
+A successful build generates:
 
-To run it locally, deploy the WAR to a Tomcat 10.1 server and start the server. Then open:
+`target/ecommerce-platform.war`
+
+## Running the Application
+
+1. Configure the Java, Tomcat, and database environment variables.
+2. Build the application using Maven.
+3. Deploy `target/ecommerce-platform.war` to the `webapps` directory of your Tomcat installation.
+4. Start Tomcat and check its logs if startup or deployment fails.
+5. Open the application in your browser:
+
+   `http://localhost:8080/ecommerce-platform/`
+
+The application context path may differ if the WAR file is deployed under a different name.
+
+## Project Structure
 
 ```text
-http://localhost:8080/ecommerce-platform/
+src/
+├── main/
+│   ├── java/com/ecommerce/
+│   │   ├── controller/       # Servlet controllers
+│   │   ├── db/               # Database connectivity
+│   │   ├── exception/        # Application exceptions
+│   │   ├── filter/           # Request filters
+│   │   ├── model/            # Domain models
+│   │   ├── repository/       # Data access and repositories
+│   │   ├── security/         # Security utilities
+│   │   └── service/          # Business logic
+│   ├── resources/
+│   │   └── db/migration/     # Database migration scripts
+│   └── webapp/
+│       ├── WEB-INF/
+│       │   └── views/        # JSP views
+│       └── assets/           # CSS and other frontend assets
+└── test/                     # Automated tests
 ```
 
-The exact context path can differ if the WAR is deployed under a different name. The landing page is a scaffold at this stage.
+## Security and Data Handling
 
-## GitHub setup
+- Configure database credentials through environment variables.
+- Use the application's existing authentication and authorization workflows.
+- Preserve CSRF protections on applicable state-changing requests.
+- Do not commit passwords, access tokens, or local environment files.
+- Keep a database backup before applying schema changes.
 
-Create an empty repository on GitHub named `ecommerce-platform` (do not add a README or `.gitignore`, because those files already exist locally). In the VS Code terminal, run these commands from the project root, replacing `YOUR-USERNAME` with your GitHub username:
+## Current Limitations
 
-```bash
-git init
-git add .
-git commit -m "chore: initialize e-commerce project scaffold"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/ecommerce-platform.git
-git push -u origin main
-```
+- UPI Demo and Card Demo simulate payment outcomes; they are not connected to a real payment gateway.
+- Successful compilation and unit tests do not replace end-to-end browser testing.
+- Database setup and deployment must be configured for the local environment.
 
-If Git asks you to identify yourself, configure the name and email you use for commits:
+## License
 
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-```
-
-Do not commit database passwords, access tokens, or other secrets. The `.gitignore` excludes local `.env` files and build output.
-
-## Development phases
-
-1. **Repository and project scaffold** — folder structure, Maven web application, landing-page shell, GitHub.
-2. **Core Java domain model** — OOP, interfaces, inheritance, polymorphism, exceptions, collections/generics, and thread-safe inventory/order logic.
-3. **Database and JDBC** — schema, connection configuration, DAO classes, CRUD, and seed data.
-4. **Web workflows** — authentication, role-based access, Servlets/JSP, and Buyer/Seller/Admin dashboards.
-5. **End-to-end features and quality** — product search, wishlist, cart/checkout, orders, validation, testing, UI polish, and documentation.
-6. **Submission preparation** — final GitHub review, run instructions, screenshots, and the presentation (when requested).
-
-## Notes
-
-- Use Jakarta imports (`jakarta.servlet.*`) with Tomcat 10.1; do not use the older `javax.servlet.*` namespace.
-- Keep SQL queries in database-access classes rather than placing them in JSP pages.
-- Use prepared statements for SQL values and password hashing for account credentials when authentication is added.
+Add the applicable project license here if one is required by the project or academic submission guidelines.

@@ -76,6 +76,18 @@ public final class BuyerCheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/buyer/checkout");
             return;
         }
+        String paymentMethod = request.getParameter("paymentMethod");
+
+        if (paymentMethod != null) {
+            paymentMethod = paymentMethod.trim();
+        }
+
+        if (!List.of("COD", "UPI", "CARD").contains(paymentMethod)) {
+            CartSupport.flash(session, null,
+                    "Please select a valid payment method.");
+            response.sendRedirect(request.getContextPath() + "/buyer/checkout");
+            return;
+        }
 
         ShoppingCart cart = CartSupport.getCart(session);
         try {
@@ -83,7 +95,7 @@ public final class BuyerCheckoutServlet extends HttpServlet {
             for (var entry : cart.getQuantities().entrySet()) {
                 requested.add(new OrderLineRequest(entry.getKey(), entry.getValue()));
             }
-            long orderId = orderDao.placeOrder(account.id(), requested, address.trim());
+            long orderId = orderDao.placeOrder(account.id(), requested, address.trim(), paymentMethod);
             cart.clear();
             CartSupport.flash(session, "Order #" + orderId + " was placed successfully.", null);
             response.sendRedirect(request.getContextPath() + "/buyer/orders?placed=" + orderId);

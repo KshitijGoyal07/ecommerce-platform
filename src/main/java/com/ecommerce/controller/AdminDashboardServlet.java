@@ -3,6 +3,8 @@ package com.ecommerce.controller;
 import com.ecommerce.model.UserAccount;
 import com.ecommerce.repository.jdbc.ProductDao;
 import com.ecommerce.repository.jdbc.UserDao;
+import com.ecommerce.security.CsrfTokens;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -31,6 +33,30 @@ public final class AdminDashboardServlet extends HttpServlet {
             request.setAttribute("activeUserCount", userDao.findAllActive().size());
             request.setAttribute("productCount", productDao.findAll().size());
             request.setAttribute("pageTitle", "Admin workspace | MarketSquare");
+            request.setAttribute("users", userDao.findAllAccounts());
+            request.setAttribute(
+                    "csrfToken",
+                    CsrfTokens.getOrCreate(request.getSession())
+            );
+
+            request.setAttribute("currentAdminId", account.id());
+
+            HttpSession session = request.getSession(false);
+
+            if (session != null) {
+                Object success = session.getAttribute("adminSuccess");
+                Object error = session.getAttribute("adminError");
+
+                if (success != null) {
+                    request.setAttribute("adminSuccess", success);
+                    session.removeAttribute("adminSuccess");
+                }
+
+                if (error != null) {
+                    request.setAttribute("adminError", error);
+                    session.removeAttribute("adminError");
+                }
+            }
             request.getRequestDispatcher("/WEB-INF/views/dashboard/admin.jsp").forward(request, response);
         } catch (SQLException exception) {
             getServletContext().log("Unable to load administrator overview.", exception);

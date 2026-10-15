@@ -28,4 +28,24 @@ public record UserAccount(
         role = Objects.requireNonNull(role, "Role is required.");
         createdAt = Objects.requireNonNull(createdAt, "Creation time is required.");
     }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getRoleName() {
+        return role.name();
+    }
+
+    public boolean isActive() {
+        return active;
+    }
 }

@@ -6,19 +6,27 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><c:out value="${pageTitle}" /></title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/application.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=seller-fix-2">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/application.css?v=seller-fix-2">
 </head><body class="app-body">
 <header class="site-header"><a class="brand" href="${pageContext.request.contextPath}/home"><span class="brand-mark">M</span><span>MarketSquare</span></a><div class="header-user"><span>Seller workspace</span><form method="post" action="${pageContext.request.contextPath}/logout"><button class="button button-secondary" type="submit">Sign out</button></form></div></header>
 <main class="dashboard-layout">
     <section class="dashboard-intro"><p class="eyebrow">SELLER WORKSPACE</p><h1 class="dashboard-title">Your store, <span><c:out value="${displayName}" /></span></h1><p class="muted-copy">Create listings, update prices in INR, and maintain your inventory.</p></section>
 
+    <nav class="seller-workspace-nav" aria-label="Seller workspace sections">
+        <a class="button button-secondary ${sellerView eq 'create' ? 'seller-nav-active' : ''}" href="${pageContext.request.contextPath}/seller/dashboard?view=create">Add product</a>
+        <a class="button button-secondary ${sellerView eq 'sales' ? 'seller-nav-active' : ''}" href="${pageContext.request.contextPath}/seller/dashboard?view=sales">Sales summary</a>
+        <a class="button button-secondary ${sellerView eq 'orders' ? 'seller-nav-active' : ''}" href="${pageContext.request.contextPath}/seller/dashboard?view=orders">Recent orders</a>
+        <a class="button button-secondary ${sellerView eq 'listings' ? 'seller-nav-active' : ''}" href="${pageContext.request.contextPath}/seller/dashboard?view=listings">Product listings</a>
+    </nav>
+
     <c:if test="${not empty sellerSuccess}"><div class="message message-success" role="status"><c:out value="${sellerSuccess}" /></div></c:if>
     <c:if test="${not empty sellerError}"><div class="message message-error" role="alert"><c:out value="${sellerError}" /></div></c:if>
 
+    <c:if test="${sellerView eq 'create'}">
     <section class="panel">
         <div class="panel-heading"><div><p class="eyebrow">NEW LISTING</p><h2>Add a product</h2></div><span class="count-chip">Prices in INR (₹)</span></div>
-        <form method="post" action="${pageContext.request.contextPath}/seller/products" class="app-form seller-create-form">
+        <form method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/seller/products" class="app-form seller-create-form">
             <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
             <input type="hidden" name="action" value="create">
             <div class="seller-form-tools">
@@ -32,10 +40,17 @@
                 <div><label for="newStock">Initial stock quantity</label><input id="newStock" name="stockQuantity" type="number" min="0" max="2147483647" step="1" required value="1"></div>
             </div>
             <label for="newDescription">Description</label><textarea id="newDescription" name="description" rows="3" maxlength="5000" placeholder="Describe the product for buyers"></textarea>
+            <div class="seller-image-upload">
+                <label for="newImage">Product photo <span class="label-hint">(optional)</span></label>
+                <input id="newImage" name="image" type="file" accept="image/jpeg,image/png">
+                <span class="seller-form-hint">JPEG or PNG, up to 5 MB. Leave blank to create a listing without a photo.</span>
+            </div>
             <button class="button button-primary form-submit" type="submit">Create product listing <span aria-hidden="true">→</span></button>
         </form>
     </section>
+    </c:if>
 
+    <c:if test="${sellerView eq 'listings'}">
     <section class="panel">
         <div class="panel-heading"><div><p class="eyebrow">INVENTORY</p><h2>Your product listings</h2></div><span class="count-chip"><c:out value="${productCount}" /> listed</span></div>
         <c:choose>
@@ -44,22 +59,56 @@
                 <div class="table-wrap"><table class="data-table seller-products-table"><thead><tr><th>Product</th><th>Category</th><th>Price (INR)</th><th>Stock</th><th>Status</th><th>Manage</th></tr></thead><tbody>
                 <c:forEach var="product" items="${products}">
                     <tr>
-                        <td><strong><c:out value="${product.name}" /></strong><c:if test="${not empty product.description}"><div class="seller-product-description"><c:out value="${product.description}" /></div></c:if></td>
-                        <td><c:out value="${product.category}" /></td>
+                        <td>
+                            <div class="seller-product-cell">
+                                <c:if test="${not empty product.imagePath}">
+                                    <span class="seller-product-thumb-frame">
+                                        <img
+                                            class="seller-product-thumb"
+                                            src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />"
+                                            alt="Photo of <c:out value='${product.name}' />"
+                                            loading="lazy">
+                                    </span>
+                                </c:if>
+
+                                <div class="seller-product-copy">
+                                    <strong>
+                                        <c:out value="${product.name}" />
+                                    </strong>
+
+                                    <c:if test="${not empty product.description}">
+                                        <div class="seller-product-description">
+                                            <c:out value="${product.description}" />
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </div>
+                        </td>
                         <td class="price-cell"><fmt:formatNumber value="${product.price}" type="currency" currencyCode="INR" minFractionDigits="2" maxFractionDigits="2" /></td>
                         <td><c:out value="${product.stockQuantity}" /></td>
                         <td><c:choose><c:when test="${product.active}"><span class="status-pill status-active">Active</span></c:when><c:otherwise><span class="status-pill status-inactive">Inactive</span></c:otherwise></c:choose></td>
                         <td class="seller-actions-cell">
                             <details class="listing-edit"><summary>Edit listing</summary>
-                                <form method="post" action="${pageContext.request.contextPath}/seller/products" class="app-form compact-form">
+                                <form method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/seller/products" class="app-form compact-form">
                                     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="action" value="update"><input type="hidden" name="productId" value="<c:out value='${product.id}' />">
                                     <label>Product name<input name="name" type="text" maxlength="180" required value="<c:out value='${product.name}' />"></label>
                                     <label>Category<input name="category" type="text" maxlength="100" required value="<c:out value='${product.category}' />"></label>
                                     <label>Price (₹ INR)<input name="price" type="number" min="0.01" max="9999999999.99" step="0.01" required value="<c:out value='${product.price}' />"></label>
                                     <label>Description<textarea name="description" rows="3" maxlength="5000"><c:out value="${product.description}" /></textarea></label>
+                                    <c:if test="${not empty product.imagePath}"><img class="seller-product-edit-image" src="${pageContext.request.contextPath}/product-images/<c:out value='${product.imagePath}' />" alt="Current product photo" loading="lazy"></c:if>
+                                    <label>Replace product photo (optional)<input name="image" type="file" accept="image/jpeg,image/png"></label>
+                                    <span class="seller-form-hint">Leave blank to keep the current photo. JPEG or PNG, up to 5 MB.</span>
                                     <button class="button button-primary" type="submit">Save details</button>
                                 </form>
                             </details>
+                            <c:if test="${not empty product.imagePath}">
+                                <form method="post" action="${pageContext.request.contextPath}/seller/products" class="deactivate-form">
+                                    <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
+                                    <input type="hidden" name="action" value="removeImage">
+                                    <input type="hidden" name="productId" value="<c:out value='${product.id}' />">
+                                    <button class="button button-danger" type="submit">Remove photo</button>
+                                </form>
+                            </c:if>
                             <form method="post" action="${pageContext.request.contextPath}/seller/products" class="stock-form">
                                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="action" value="stock"><input type="hidden" name="productId" value="<c:out value='${product.id}' />">
                                 <label for="stock-${product.id}">Set stock quantity</label><div class="stock-input-row"><input id="stock-${product.id}" name="stockQuantity" type="number" min="0" max="2147483647" step="1" required value="<c:out value='${product.stockQuantity}' />"><button class="button button-secondary" type="submit">Update</button></div>
@@ -86,6 +135,7 @@
             </c:otherwise>
         </c:choose>
     </section>
+    </c:if>
     <c:if test="${not empty sellerReportError}">
         <section class="panel">
             <div class="message message-error" role="alert">
@@ -95,6 +145,7 @@
     </c:if>
 
     <c:if test="${empty sellerReportError}">
+        <c:if test="${sellerView eq 'sales'}">
         <!-- SELLER SALES SUMMARY -->
         <section class="panel seller-sales-panel">
             <div class="panel-heading">
@@ -136,7 +187,9 @@
                 </article>
             </div>
         </section>
+        </c:if>
 
+        <c:if test="${sellerView eq 'orders'}">
         <!-- SELLER ORDER HISTORY -->
         <section class="panel seller-orders-panel">
             <div class="panel-heading">
@@ -161,6 +214,7 @@
                                     <th>Order</th>
                                     <th>Date</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Your products</th>
                                     <th>Seller subtotal</th>
                                 </tr>
@@ -170,9 +224,13 @@
                                 <c:forEach var="order" items="${sellerOrders}">
                                     <tr>
                                         <td>
-                                            <strong>
-                                                #<c:out value="${order.orderId}" />
-                                            </strong>
+                                            <details class="seller-order-details">
+                                                <summary><strong>Order #<c:out value="${order.orderId}" /></strong></summary>
+                                                <div class="seller-order-detail-body">
+                                                    <p><strong>Buyer</strong><span><c:out value="${order.buyerName}" /></span></p>
+                                                    <p><strong>Delivery address</strong><span class="seller-order-address"><c:out value="${order.shippingAddressSnapshot}" /></span></p>
+                                                </div>
+                                            </details>
                                         </td>
 
                                         <td>
@@ -183,6 +241,56 @@
                                             <span class="status-pill">
                                                 <c:out value="${order.status}" />
                                             </span>
+                                        </td>
+
+                                        
+                                        <td>
+                                            <div class="seller-payment-cell">
+                                                <strong>
+                                                    <c:choose>
+                                                        <c:when test="${order.paymentMethod eq 'COD'}">
+                                                            Cash on delivery
+                                                        </c:when>
+                                                        <c:when test="${order.paymentMethod eq 'UPI'}">
+                                                            UPI · Demo
+                                                        </c:when>
+                                                        <c:when test="${order.paymentMethod eq 'CARD'}">
+                                                            Card · Demo
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:out value="${order.paymentMethod}" />
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </strong>
+
+                                                <c:choose>
+                                                    <c:when test="${order.paymentStatus eq 'SIMULATED'}">
+                                                        <span class="payment-status-pill payment-status-demo">
+                                                            Demo recorded
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'PAID'}">
+                                                        <span class="payment-status-pill payment-status-paid">
+                                                            Paid
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'FAILED'}">
+                                                        <span class="payment-status-pill payment-status-failed">
+                                                            Failed
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${order.paymentStatus eq 'REFUNDED'}">
+                                                        <span class="payment-status-pill">
+                                                            Refunded
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="payment-status-pill payment-status-pending">
+                                                            Pending
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
                                         </td>
 
                                         <td>
@@ -231,12 +339,12 @@
             </c:choose>
 
             <p class="muted-copy">
-                Order totals include only products sold by your store.
-                Buyer delivery addresses and other sellers' items are not displayed.
+                Order totals include only products sold by your store. Buyer and delivery details are shown for orders that contain your products.
             </p>
         </section>
+        </c:if>
     </c:if>
-    <p class="small-note">A listing can be edited or deactivated only by the seller who owns it. Deactivation hides it from buyers without deleting historical order references. All prices are Indian Rupees (INR).</p>
+    <p class="small-note">A listing can be edited or deactivated only by the seller who owns it. Deactivation hides it from buyers without deleting historical order references. Product photos are optional; all prices are Indian Rupees (INR).</p>
 </main><footer class="site-footer"><span>MarketSquare · Seller</span><span>Product and inventory management</span></footer>
 <script>
 (function () {
